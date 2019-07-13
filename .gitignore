@@ -1,0 +1,8 @@
+/_bin/
+/_release/
+/unitysln/MegeXR/obj/
+/unitysln/MegeXR/Library/
+/unitysln/MegeXR/Temp/
+/unitysln/MegeXR/*.csproj
+/unitysln/MegeXR/*.sln
+/unitysln/MegeXR/.vs/
