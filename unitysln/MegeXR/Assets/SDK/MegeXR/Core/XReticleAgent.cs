@@ -15,6 +15,8 @@ namespace XTC.MegeXR.Core
     {
         public string uuid = "";
         public CallBack.Invoke<float> onMangerUpdate;
+        public CallBack.Invoke onPointEnter;
+        public CallBack.Invoke onPointExit;
 		public bool visible = true;
 		public float duration = 1.0f;
     }

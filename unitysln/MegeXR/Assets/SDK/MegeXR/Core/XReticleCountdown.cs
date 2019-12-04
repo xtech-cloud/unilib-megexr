@@ -149,6 +149,7 @@ namespace XTC.MegeXR.Core
 
                 targetTime_ = reticle.duration;
                 visiable = reticle.visible;
+                reticle.onPointEnter();
             }
         }
 
@@ -167,6 +168,15 @@ namespace XTC.MegeXR.Core
             manger = 0;
             MaterialComp.SetFloat("_FillAmount", 0);
             raycastResultObj_ = null;
+
+
+            if(null == _gameobject)
+                return;
+            string objID = string.Format("{0}", _gameobject.GetInstanceID());
+            XReticleAgent reticle = XReticlePool.Find(objID);
+            if(null == reticle)
+                return;
+            reticle.onPointExit();
         }
 
         

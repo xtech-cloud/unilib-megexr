@@ -15,9 +15,16 @@ namespace XTC.MegeXR.Decorator
 {
     public class GazeFacadeDecorator : MonoBehaviour
     {
+        public enum ExitAction
+        {
+            NONE,
+            CLEAR,
+            FILL
+        }
         public bool visible = true;
         public float duration = 1f;
         public Image fillImage = null;
+        public ExitAction exitAction = ExitAction.NONE;
 
 
         void Start()
@@ -29,6 +36,8 @@ namespace XTC.MegeXR.Decorator
             agent.duration = duration;
             agent.visible = visible;
             agent.onMangerUpdate = onManger;
+            agent.onPointEnter = onPointEnter;
+            agent.onPointExit = onPointExit;
             XReticlePool.Register(agent);
         }
 
@@ -42,6 +51,23 @@ namespace XTC.MegeXR.Decorator
         {
             if (null != fillImage)
                 fillImage.fillAmount = _manger / 360f;
+        }
+
+        void onPointEnter()
+        {
+            if (null != fillImage)
+                fillImage.fillAmount = 0;
+        }
+
+        void onPointExit()
+        {
+            if (null != fillImage)
+            {
+                if(ExitAction.CLEAR == exitAction)
+                    fillImage.fillAmount = 0;
+                else if(ExitAction.FILL == exitAction)
+                    fillImage.fillAmount = 1;
+            }
         }
     }
 }//namespace
