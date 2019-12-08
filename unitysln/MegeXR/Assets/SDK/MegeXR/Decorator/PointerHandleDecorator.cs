@@ -20,14 +20,21 @@ namespace XTC.MegeXR.Decorator
 
         void Awake()
         {
-            handler = new XPointerHandler();
-            handler.owner = this.gameObject;
-            handler.Setup();
+            Setup();
         }
 
         void OnDestory()
         {
 
+        }
+
+        public void Setup()
+        {
+            if(null != handler)
+                return;
+            handler = new XPointerHandler();
+            handler.owner = this.gameObject;
+            handler.Setup();
         }
     }
 }//namespace
