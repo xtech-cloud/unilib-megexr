@@ -13,9 +13,6 @@ namespace XTC.MegeXR.Core
         void Release();
         void AttachReticle(Transform _reticle);
         void AttachGaze(Transform _gaze);
-        bool IsOkDown();
-        bool IsOkUp();
-        bool IsOkHold();
         void Update();
         Transform root { get; }
         Transform camera { get; }

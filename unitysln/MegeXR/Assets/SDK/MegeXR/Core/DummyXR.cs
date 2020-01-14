@@ -57,21 +57,6 @@ namespace XTC.MegeXR.Core
             _gaze.SetParent(camera_);
         }
 
-        public bool IsOkDown()
-        {
-            return Input.GetMouseButtonDown(0) || Input.GetButtonDown("Submit");
-        }
-
-        public bool IsOkUp()
-        {
-            return Input.GetMouseButtonUp(0) || Input.GetButtonUp("Submit");
-        }
-
-        public bool IsOkHold()
-        {
-            return Input.GetMouseButton(0) || Input.GetButtonUp("Submit");
-        }
-
         public void Update()
         {
             if (0 == Input.touchCount)
@@ -90,6 +75,45 @@ namespace XTC.MegeXR.Core
                 rotationY += deltaPos.y * sensitivityY;
                 rotationY = clamp(rotationY, maxmunY, minmumY);
                 camera_.localEulerAngles = new Vector3(-rotationY, rotationX, 0);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                XKeyHandler.DownKey((int)XKeyHandler.Key.RETURN);
+            }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                XKeyHandler.DownKey((int)XKeyHandler.Key.OK);
+            }
+            if (Input.GetKeyDown(KeyCode.Home))
+            {
+                XKeyHandler.DownKey((int)XKeyHandler.Key.HOME);
+            }
+
+            if (Input.GetKeyUp(KeyCode.Escape))
+            {
+                XKeyHandler.UpKey((int)XKeyHandler.Key.RETURN);
+            }
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                XKeyHandler.UpKey((int)XKeyHandler.Key.OK);
+            }
+            if (Input.GetKeyUp(KeyCode.Home))
+            {
+                XKeyHandler.UpKey((int)XKeyHandler.Key.HOME);
+            }
+
+            if (Input.GetKey(KeyCode.Escape))
+            {
+                XKeyHandler.HoldKey((int)XKeyHandler.Key.RETURN);
+            }
+            if (Input.GetKey(KeyCode.Space))
+            {
+                XKeyHandler.HoldKey((int)XKeyHandler.Key.OK);
+            }
+            if (Input.GetKey(KeyCode.Home))
+            {
+                XKeyHandler.HoldKey((int)XKeyHandler.Key.HOME);
             }
         }
 

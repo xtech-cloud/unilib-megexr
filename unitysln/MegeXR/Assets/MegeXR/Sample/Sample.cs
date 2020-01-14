@@ -38,6 +38,15 @@ public class Sample : MonoBehaviour
 
         XPointerInputModule.Pointer.overridePointerCamera = xr.camera.GetComponent<Camera>();
 
+        XKeyHandler.onKeyDown.AddListener((_key)=>{
+            Debug.Log("down key: " + _key);
+        });
+        XKeyHandler.onKeyUp.AddListener((_key)=>{
+            Debug.Log("up key: " + _key);
+        });
+        XKeyHandler.onKeyHold.AddListener((_key)=>{
+            Debug.Log("hold key: " + _key);
+        });
         
     }
 	

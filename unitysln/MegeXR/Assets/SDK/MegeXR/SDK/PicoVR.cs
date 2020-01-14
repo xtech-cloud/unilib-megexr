@@ -52,24 +52,46 @@ namespace XTC.MegeXR.SDK
             _gaze.SetParent(camera_);
         }
 
-        public bool IsOkDown()
-        {
-            return Input.GetMouseButtonDown(0) || Input.GetButtonDown("Submit");
-        }
-
-        public bool IsOkUp()
-        {
-            return Input.GetMouseButtonUp(0) || Input.GetButtonUp("Submit");
-        }
-
-        public bool IsOkHold()
-        {
-            return Input.GetMouseButton(0) || Input.GetButtonUp("Submit");
-        }
-
         public void Update()
         {
+            if(Input.GetKeyDown(KeyCode.Escape))
+            {
+                XKeyHandler.DownKey((int)XKeyHandler.Key.RETURN);
+            }
+            if(Input.GetKeyDown(KeyCode.Joystick1Button0))
+            {
+                XKeyHandler.DownKey((int)XKeyHandler.Key.OK);
+            }
+            if(Input.GetKeyDown(KeyCode.Home))
+            {
+                XKeyHandler.DownKey((int)XKeyHandler.Key.HOME);
+            }
 
+            if(Input.GetKeyUp(KeyCode.Escape))
+            {
+                XKeyHandler.UpKey((int)XKeyHandler.Key.RETURN);
+            }
+            if(Input.GetKeyUp(KeyCode.Joystick1Button0))
+            {
+                XKeyHandler.UpKey((int)XKeyHandler.Key.OK);
+            }
+            if(Input.GetKeyUp(KeyCode.Home))
+            {
+                XKeyHandler.UpKey((int)XKeyHandler.Key.HOME);
+            }
+
+            if(Input.GetKey(KeyCode.Escape))
+            {
+                XKeyHandler.HoldKey((int)XKeyHandler.Key.RETURN);
+            }
+            if(Input.GetKey(KeyCode.Joystick1Button0))
+            {
+                XKeyHandler.HoldKey((int)XKeyHandler.Key.OK);
+            }
+            if(Input.GetKey(KeyCode.Home))
+            {
+                XKeyHandler.HoldKey((int)XKeyHandler.Key.HOME);
+            }
         }
 
 
