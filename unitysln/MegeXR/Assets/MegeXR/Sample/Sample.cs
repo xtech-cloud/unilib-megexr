@@ -9,7 +9,15 @@ using XTC.MegeXR.SDK;
 
 public class Sample : MonoBehaviour 
 {
-
+    public enum VRMode
+    {
+        OFF,
+        DUMMY,
+        PICO,
+        SKYWORTH,
+        STEAM
+    }
+    public VRMode modeVR = VRMode.OFF;
     public Transform eventSystem;
     public Transform reticle;
     public Transform canvas3D;
@@ -19,7 +27,16 @@ public class Sample : MonoBehaviour
 
     void Awake()
     {
+        if(modeVR == VRMode.OFF)
+            return;
+
         IXR xr = new DummyXR();
+        if(modeVR == VRMode.PICO)
+            xr = new PicoVR();
+        else if(modeVR == VRMode.SKYWORTH)
+            xr = new SkyworthVR();
+        else if(modeVR == VRMode.STEAM)
+            xr = new SteamVR();
         Engine.InjectXR(xr);
         Engine.InjectReticle(reticle);
         Engine.InjectCanvas3D(canvas3D);
@@ -53,12 +70,15 @@ public class Sample : MonoBehaviour
 
     void OnEnable()
     {
+        if(modeVR == VRMode.OFF)
+            return;
         Engine.Run();
     }
 
     void Start()
     {
-        Debug.Log("Start");
+        if(modeVR == VRMode.OFF)
+            return;
 
         cubePoint.GetComponent<PointerHandleDecorator>().handler.AddClickEvent((_event)=>{
             Debug.Log("click " + cubePoint.name);
@@ -71,16 +91,22 @@ public class Sample : MonoBehaviour
     
 	// Update is called once per frame
 	void Update () {
+        if(modeVR == VRMode.OFF)
+            return;
         Engine.Update();
 	}
 
     void OnDisable()
     {
+        if(modeVR == VRMode.OFF)
+            return;
         Engine.Stop();
     }
 
     void OnDestroy()
     {
+        if(modeVR == VRMode.OFF)
+            return;
         Engine.Release();
     }
 }
