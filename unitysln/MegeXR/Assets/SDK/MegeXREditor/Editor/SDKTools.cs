@@ -97,6 +97,26 @@ public static class SDKTools
         AssetDatabase.Refresh();
     }
 
+     [MenuItem("MegeXR/Import/SteamVR")]
+    public static void ImportSteamVRSDK()
+    {
+        importFolder(Path.Combine(srcPath, "_steam"), Path.Combine(destPath, "_steam"));
+
+        AssetDatabase.Refresh();
+
+        PlayerSettings.gpuSkinning = true;
+        PlayerSettings.virtualRealitySupported = true;
+        PlayerSettings.stereoRenderingPath  = StereoRenderingPath.SinglePass;
+    }
+
+    [MenuItem("MegeXR/Clean/SteamVR")]
+    public static void CleanSteamVRSDK()
+    {
+        delFolder(Path.Combine(destPath, "_steam"));
+
+        AssetDatabase.Refresh();
+    }
+
 
     private static void cleanSymbol()
     {

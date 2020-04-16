@@ -97,12 +97,12 @@ namespace XTC.MegeXR.SDK
 
         private void preload()
         {
-            GameObject go = Resources.Load<GameObject>("Pvr_UnitySDK");
+            GameObject go = Resources.Load<GameObject>("[CameraRig]");
             GameObject objRoot = GameObject.Instantiate<GameObject>(go);
-            objRoot.name = "Pico";
+            objRoot.name = "Steam";
             root_ = objRoot.transform;
 
-            camera_ = root_.transform.Find("Head");
+            camera_ = root_.transform.Find("Camera");
         }
     }//class
 }//namespace
