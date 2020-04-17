@@ -88,6 +88,7 @@ namespace XTC.MegeXR.Core
 
         private static void update()
         {
+            canvas3D.position = xr.camera.position;
             xr.Update();
         }
 
