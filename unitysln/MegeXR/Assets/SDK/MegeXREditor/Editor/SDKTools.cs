@@ -19,8 +19,8 @@ public static class SDKTools
         PlayerSettings.virtualRealitySupported = false;
         PlayerSettings.stereoRenderingPath  = StereoRenderingPath.MultiPass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
-        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
     
     [MenuItem("MegeXR/Clean/Dummy")]
@@ -43,8 +43,8 @@ public static class SDKTools
         PlayerSettings.virtualRealitySupported = false;
         PlayerSettings.stereoRenderingPath  = StereoRenderingPath.MultiPass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
-        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
 
     [MenuItem("MegeXR/Clean/PicoVR")]
@@ -69,8 +69,8 @@ public static class SDKTools
         PlayerSettings.virtualRealitySupported = false;
         PlayerSettings.stereoRenderingPath  = StereoRenderingPath.MultiPass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
-        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
 
     [MenuItem("MegeXR/Clean/IdealensVR")]
@@ -95,8 +95,8 @@ public static class SDKTools
         PlayerSettings.virtualRealitySupported = false;
         PlayerSettings.stereoRenderingPath  = StereoRenderingPath.MultiPass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
-        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
 
     [MenuItem("MegeXR/Import/SkyworthVR -V901")]
@@ -111,8 +111,8 @@ public static class SDKTools
         PlayerSettings.virtualRealitySupported = true;
         PlayerSettings.stereoRenderingPath  = StereoRenderingPath.SinglePass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
-        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
 
     [MenuItem("MegeXR/Clean/SkyworthVR")]
