@@ -56,6 +56,33 @@ public static class SDKTools
         AssetDatabase.Refresh();
     }
 
+    
+    [MenuItem("MegeXR/Import/IdealensVR")]
+    public static void ImportIdealensVRSDK()
+    {
+        importFolder(Path.Combine(srcPath, "_idealens"), Path.Combine(destPath, "_idealens"));
+        importAndroidManifest("_idealens");
+
+        AssetDatabase.Refresh();
+
+        PlayerSettings.gpuSkinning = false;
+        PlayerSettings.virtualRealitySupported = false;
+        PlayerSettings.stereoRenderingPath  = StereoRenderingPath.MultiPass;
+        PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel19;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+    }
+
+    [MenuItem("MegeXR/Clean/IdealensVR")]
+    public static void CleanIdealensVRSDK()
+    {
+        delFolder(Path.Combine(destPath, "_idealens"));
+        delAndroidManifest();
+
+        AssetDatabase.Refresh();
+    }
+
+
     [MenuItem("MegeXR/Import/SkyworthVR -S801")]
     public static void ImportSkyworthVR_S801_SDK()
     {

@@ -15,7 +15,8 @@ public class Sample : MonoBehaviour
         DUMMY,
         PICO,
         SKYWORTH,
-        STEAM
+        STEAM,
+        IDEALENS
     }
     public VRMode modeVR = VRMode.OFF;
     public Transform eventSystem;
@@ -37,6 +38,8 @@ public class Sample : MonoBehaviour
             xr = new SkyworthVR();
         else if(modeVR == VRMode.STEAM)
             xr = new SteamVR();
+        else if(modeVR == VRMode.IDEALENS)
+            xr = new IdealensVR();
         Engine.InjectXR(xr);
         Engine.InjectReticle(reticle);
         Engine.InjectCanvas3D(canvas3D);
