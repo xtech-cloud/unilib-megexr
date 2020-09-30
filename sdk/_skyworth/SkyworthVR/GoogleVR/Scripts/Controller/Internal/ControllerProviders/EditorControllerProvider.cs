@@ -76,7 +76,11 @@ namespace Gvr.Internal {
       emulatorControllerProvider.OnResume();
       mouseControllerProvider.OnResume();
     }
-  }
+
+        public void OnQuit()
+        {
+        }
+    }
 }
 
 #endif  // UNITY_EDITOR

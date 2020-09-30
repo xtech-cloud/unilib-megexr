@@ -96,6 +96,8 @@ public class GvrHead : MonoBehaviour
     private bool m_Recentering;
     private bool readCount;
     public static Quaternion orientation = new Quaternion();
+    private Matrix4x4 mAdjust = Matrix4x4.identity;
+    public Matrix4x4 CurrentAdjust { get { return mAdjust; } }
     void Update()
     {
         updated = false;  // OK to recompute head pose.
@@ -111,7 +113,10 @@ public class GvrHead : MonoBehaviour
     {
         UpdateHead();
     }
-
+    public void SetAdujst(Matrix4x4 matrix4X4)
+    {
+        mAdjust = matrix4X4;
+    }
     // Compute new head pose.
     private void UpdateHead()
     {
@@ -121,55 +126,13 @@ public class GvrHead : MonoBehaviour
         }
         updated = true;
 
-        //if (m_Recentering)
-        //{
-        //    if (!readCount)
-        //    {
-        //        GvrViewer.Instance.UpdateState();
-        //        m_TargetRotation =  GvrViewer.Instance.HeadPose.Orientation;
-        //        readCount = true;
-        //    }
-        //    else
-        //    {
-        //        GvrViewer.Instance.UpdateState();
-        //    }
-
-        //    m_PreviousRotation = Quaternion.Lerp(m_TargetRotation, m_PreviousRotation, Time.deltaTime * 50.0f);
-        //    if (target == null)
-        //    {
-        //        transform.localRotation = m_PreviousRotation;
-        //    }
-        //    else
-        //    {
-        //        transform.rotation = target.rotation * m_PreviousRotation;
-        //    }
-
-        //    if (m_PreviousRotation == m_TargetRotation)
-        //    {
-        //        m_Recentering = false;
-        //        trackRotation = true;
-        //    }
-
-        //}
-        //else
-        //{
-        //    GvrViewer.Instance.UpdateState();
-        //}
         
-        //if (GvrControllerInput.Recentered)
-        //{
-        //    //mYaw = 0;
-        //    m_PreviousRotation = GvrViewer.Instance.HeadPose.Orientation;
-        //    GvrViewer.Instance.Recenter();
-        //    m_Recentering = true;
-        //    trackRotation = false;
-        //}
 
         GvrViewer.Instance.UpdateState();
         
         if (trackRotation)
         {
-            orientation = GvrViewer.Instance.HeadPose.Orientation;
+            orientation = (mAdjust * Matrix4x4.TRS(Vector3.zero,GvrViewer.Instance.HeadPose.Orientation,Vector3.one)).rotation;
             if (target == null)
             {
                transform.localRotation = orientation;

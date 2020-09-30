@@ -283,7 +283,7 @@ public class GvrViewer : MonoBehaviour
 #endif
 
     // The VR device that will be providing input data.
-    private static BaseVRDevice device;
+    private BaseVRDevice device;
 
     /// Whether native distortion correction functionality is supported by the VR device.
     public bool NativeDistortionCorrectionSupported { get; private set; }
@@ -313,7 +313,7 @@ public class GvrViewer : MonoBehaviour
         }
     }
     [SerializeField]
-    private float stereoScreenScale = 1;
+    private float stereoScreenScale = 1.2f;
 
     /// The texture that Unity renders the scene to.  After the frame has been rendered,
     /// this texture is drawn to the screen with a lens distortion correction effect.
@@ -406,13 +406,13 @@ public class GvrViewer : MonoBehaviour
     {
         get
         {
-            Pose3D pose3D = device.GetHeadPose();
-            Matrix4x4 mrotaiontMatrix = Matrix4x4.TRS(pose3D.Position, Quaternion.identity, Vector3.one)
-                *Matrix4x4.TRS(Vector3.one, Quaternion.Euler(0,mYaw,0), Vector3.one)
-                *Matrix4x4.TRS(pose3D.Position, Quaternion.identity, Vector3.one).inverse 
-                *pose3D.Matrix;
-            MutablePose3D mutablePose3D = new MutablePose3D();
-            mutablePose3D.Set(mrotaiontMatrix);
+            //Pose3D pose3D = device.GetHeadPose();
+            //Matrix4x4 mrotaiontMatrix = Matrix4x4.TRS(pose3D.Position, Quaternion.identity, Vector3.one)
+            //    *Matrix4x4.TRS(Vector3.one, Quaternion.Euler(0,mYaw,0), Vector3.one)
+            //    *Matrix4x4.TRS(pose3D.Position, Quaternion.identity, Vector3.one).inverse 
+            //    *pose3D.Matrix;
+            //MutablePose3D mutablePose3D = new MutablePose3D();
+            //mutablePose3D.Set(mrotaiontMatrix);
             //return device.GetHeadPose();
             return device.GetHeadPose();
         }
@@ -558,6 +558,13 @@ public class GvrViewer : MonoBehaviour
 
         Svr.SvrLog.Log("GvrViewer Awake Resume");
         SVR.AtwAPI.EndTrace();
+
+        Application.lowMemory += OnLowMemory;
+    }
+
+    private void OnLowMemory()
+    {
+        Resources.UnloadUnusedAssets();
     }
 
     void Start()
@@ -610,6 +617,21 @@ public class GvrViewer : MonoBehaviour
     /// same as the normal system Back Button, although you can respond to either however you want
     /// in your app.
     public bool BackButtonPressed { get; private set; }
+
+    private bool canRecent = true;
+    public bool CanRecent
+    {
+        get
+        {
+            return canRecent;
+        }
+        set
+        {
+            canRecent = value;
+            if (canRecent)
+                Controller.Head.SetAdujst(Matrix4x4.identity);
+        }
+    }
 
     // Only call device.UpdateState() once per frame.
     private int updatedToFrame = 0;
@@ -690,27 +712,14 @@ public class GvrViewer : MonoBehaviour
     private float mTouchTime = 0;
     private void Update()
     {
-        if (GvrControllerInput.SvrState == SvrControllerState.GvrController && GvrControllerInput.Recentered)
+        if (GvrControllerInput.Recentered && canRecent)
         {
             //mYaw = 0;
             Recenter();
         }
 
-        if (GvrControllerInput.GetTouchDown())
-        {
-            mTouchTime = Time.time;
-        }
-        if (GvrControllerInput.GetTouch())
-        {
-            if (mTouchTime != 0 && Time.time - mTouchTime >= 1.0)
-            {
-                Recenter();
-                mTouchTime = 0;
-            }
-        }
-
-        NoloRecenter();
-
+        //if (Svr.SvrSetting.GetNoloConnected)
+        //    NoloRecenter();
     }
     #region NOLO RECENTER
     //recenter about
@@ -723,12 +732,10 @@ public class GvrViewer : MonoBehaviour
         //leftcontroller double click system button
         if (GvrControllerInput.GetControllerState(SvrControllerState.NoloLeftContoller).homeButtonUp 
             || GvrControllerInput.GetControllerState(SvrControllerState.NoloRightContoller).homeButtonUp)
-        //if (NoloVR_Controller.GetDevice(NoloDeviceType.LeftController).GetNoloButtonUp(NoloButtonID.System))
         {
             if (Time.frameCount - leftcontrollerRecenter_PreFrame <= recenterSpacingFrame)
             {
 
-                //UnityEngine.XR.InputTracking.Recenter();
                 Recenter();
                 leftcontrollerRecenter_PreFrame = -1;
             }
@@ -737,21 +744,7 @@ public class GvrViewer : MonoBehaviour
                 leftcontrollerRecenter_PreFrame = Time.frameCount;
             }
         }
-        //rightcontroller double click system button
-        //if (NoloVR_Controller.GetDevice(NoloDeviceType.RightController).GetNoloButtonUp(NoloButtonID.System))
-        //if (GvrControllerInput.HomeButtonUp)
-        //{
-        //    if (Time.frameCount - rightcontrollerRecenter_PreFrame <= recenterSpacingFrame)
-        //    {
-        //        //UnityEngine.XR.InputTracking.Recenter();
-        //        Recenter();
-        //        rightcontrollerRecenter_PreFrame = -1;
-        //    }
-        //    else
-        //    {
-        //        rightcontrollerRecenter_PreFrame = Time.frameCount;
-        //    }
-        //}
+       
     }
     #endregion !NOLO RECENTER
     /// Launch the device pairing and setup dialog.
@@ -803,7 +796,6 @@ public class GvrViewer : MonoBehaviour
     {
         Svr.SvrLog.LogFormat("GvrViewer OnApplicationPause,{0}", pause);
         device.OnPause(pause);
-       
     }
     private float TestYaw = 0;
     IEnumerator ResetTest()
@@ -845,7 +837,7 @@ public class GvrViewer : MonoBehaviour
         //SensorDemo.SaveHMDrotation(HeadPose.Orientation.eulerAngles.y);
         device.OnApplicationQuit();
     }
-
+    
     void OnDestroy()
     {
 #if !UNITY_HAS_GOOGLEVR || UNITY_EDITOR
@@ -853,6 +845,7 @@ public class GvrViewer : MonoBehaviour
 #endif  // !UNITY_HAS_GOOGLEVR || UNITY_EDITOR
         if (device != null)
         {
+            Debug.Log("OnDestroy");
             device.Destroy();
         }
         if (instance == this)

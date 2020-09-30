@@ -92,10 +92,11 @@ public static class SDKTools
         AssetDatabase.Refresh();
 
         PlayerSettings.gpuSkinning = false;
-        PlayerSettings.virtualRealitySupported = false;
-        PlayerSettings.stereoRenderingPath  = StereoRenderingPath.MultiPass;
+        PlayerSettings.virtualRealitySupported = true;
+        PlayerSettings.Android.blitType = AndroidBlitType.Never;
+        PlayerSettings.stereoRenderingPath  = StereoRenderingPath.SinglePass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
         PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
 
@@ -109,9 +110,10 @@ public static class SDKTools
 
         PlayerSettings.gpuSkinning = false;
         PlayerSettings.virtualRealitySupported = true;
+        PlayerSettings.Android.blitType = AndroidBlitType.Always;
         PlayerSettings.stereoRenderingPath  = StereoRenderingPath.SinglePass;
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
         PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
     }
 

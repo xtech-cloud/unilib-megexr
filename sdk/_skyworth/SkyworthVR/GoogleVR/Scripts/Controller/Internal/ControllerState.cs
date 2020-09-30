@@ -55,6 +55,23 @@ namespace Gvr.Internal
         internal bool homeButtonUp = false;
         internal bool homeButtonState = false;
 
+        internal bool gripButtonDown = false;
+        internal bool gripButtonUp = false;
+        internal bool gripButtonState = false;
+
+        internal bool TouchPadUpButtonState = false;
+        internal bool TouchPadUpButtonDown = false;
+        internal bool TouchPadUpButtonUp = false;
+        internal bool TouchPadDownButtonState = false;
+        internal bool TouchPadDownButtonDown = false;
+        internal bool TouchPadDownButtonUp = false;
+        internal bool TouchPadLeftButtonState = false;
+        internal bool TouchPadLeftButtonDown = false;
+        internal bool TouchPadLeftButtonUp = false;
+        internal bool TouchPadRightButtonState = false;
+        internal bool TouchPadRightButtonDown = false;
+        internal bool TouchPadRightButtonUp = false;
+
         internal string errorDetails = "";
         internal IntPtr gvrPtr = IntPtr.Zero;
 
@@ -91,6 +108,24 @@ namespace Gvr.Internal
             homeButtonDown = other.homeButtonDown;
             homeButtonUp = other.homeButtonUp;
             homeButtonState = other.homeButtonState;
+            gripButtonDown = other.gripButtonDown;
+            gripButtonUp = other.gripButtonUp;
+            gripButtonState = other.gripButtonState;
+
+            TouchPadUpButtonState = other.TouchPadUpButtonState;
+            TouchPadUpButtonDown = other.TouchPadUpButtonDown;
+            TouchPadUpButtonUp = other.TouchPadUpButtonUp;
+            TouchPadDownButtonState = other.TouchPadDownButtonState;
+            TouchPadDownButtonDown = other.TouchPadDownButtonDown;
+            TouchPadDownButtonUp = other.TouchPadDownButtonUp;
+            TouchPadLeftButtonState = other.TouchPadLeftButtonState;
+            TouchPadLeftButtonDown = other.TouchPadLeftButtonDown;
+            TouchPadLeftButtonUp = other.TouchPadLeftButtonUp;
+            TouchPadRightButtonState = other.TouchPadRightButtonState;
+            TouchPadRightButtonDown = other.TouchPadRightButtonDown;
+            TouchPadRightButtonUp = other.TouchPadRightButtonUp;
+
+
             errorDetails = other.errorDetails;
             gvrPtr = other.gvrPtr;
             isCharging = other.isCharging;

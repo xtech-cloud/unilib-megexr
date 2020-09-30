@@ -17,6 +17,8 @@ using System;
 using System.Runtime.InteropServices;
 using Gvr.Internal;
 using Svr;
+using System.Threading;
+using System.Collections.Generic;
 
 public class SvrAndroidServiceControllerProvider : IControllerProvider
 {
@@ -25,7 +27,13 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
     private const int SVR_CONTROLLER_BUTTON_APP = 1 << 1;
     private const int SVR_CONTROLLER_BUTTON_RETURN = 1 << 2;
     private const int SVR_CONTROLLER_BUTTON_HOME = 1 << 3;
+    private const int SVR_CONTROLLER_BUTTON_GRIP = 1 << 4;
     private const int SVR_CONTROLLER_BUTTON_TRIGGER = 1 << 8;
+
+    private const int SVR_CONTROLLER_BUTTON_TouchPadUp = 1 << 8;
+    private const int SVR_CONTROLLER_BUTTON_TouchPadDown = 1 << 9;
+    private const int SVR_CONTROLLER_BUTTON_TouchPadLeft = 1 << 10;
+    private const int SVR_CONTROLLER_BUTTON_TouchPadRight = 1 << 11;
 
     // enum gvr_controller_connection_state:
     private const int SVR_CONTROLLER_DISCONNECTED = 0;
@@ -131,11 +139,45 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
     }
 
     #endregion
+    private static IntPtr getQuaternion_methodID;
+    private static IntPtr getAccelerometer_methodID;
+    private static IntPtr getGyro_methodID;
+    private static IntPtr getTouchPos_methodID;
+    private static IntPtr isTouching_methodID;
+    private static IntPtr getTouchUp_methodID;
+    private static IntPtr getTouchDown_methodID;
+    private static IntPtr getButtonState_methodID;
+    private static IntPtr getButtonDown_methodID;
+    private static IntPtr getButtonUp_methodID;
+    private static IntPtr getRecentered_methodID;
+    private static IntPtr getBattery_methodID;
+    private static IntPtr getConnectionState_methodID;
 
+    private static jvalue[] svrControllerIndex_head_jvalue;
+    private static jvalue[] svrControllerIndex_left_jvalue;
+    private static jvalue[] svrControllerIndex_right_jvalue;
     internal SvrAndroidServiceControllerProvider()
     {
         SvrLog.Log("SvrAndroidServiceControllerProvider");
         Init();
+
+        getQuaternion_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getQuaternion", "(I)[F", false);
+        getAccelerometer_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getAccelerometer", "(I)[F", false);
+        getGyro_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getGyro", "(I)[F", false);
+        getTouchPos_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getTouchPos", "(I)[F", false);
+        isTouching_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "isTouching", "(I)Z", false);
+        getTouchUp_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getTouchUp", "(I)Z", false);
+        getTouchDown_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getTouchDown", "(I)Z", false);
+        getButtonState_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getButtonState", "(II)Z", false);
+        getButtonDown_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getButtonDown", "(II)Z", false);
+        getButtonUp_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getButtonUp", "(II)Z", false);
+        getRecentered_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getRecentered", "(I)Z", false);
+        getBattery_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getBattery", "(I)I", false);
+        getConnectionState_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getConnectionState", "(I)I", false);
+
+        svrControllerIndex_head_jvalue = AndroidJNIHelper.CreateJNIArgArray(new object[] { (int)SvrControllerIndex.SVR_CONTROLLER_INDEX_HEAD });
+        svrControllerIndex_left_jvalue = AndroidJNIHelper.CreateJNIArgArray(new object[] { (int)SvrControllerIndex.SVR_CONTROLLER_INDEX_LEFT });
+        svrControllerIndex_right_jvalue = AndroidJNIHelper.CreateJNIArgArray(new object[] { (int)SvrControllerIndex.SVR_CONTROLLER_INDEX_RIGHT });
     }
 
     ~SvrAndroidServiceControllerProvider()
@@ -145,7 +187,7 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
 
     public void ReadState(ControllerState outState)
     {
-
+        UnityEngine.Profiling.Profiler.BeginSample("controller_read");
         if (error)
         {
             outState.connectionState = GvrConnectionState.Error;
@@ -153,8 +195,9 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
             outState.errorDetails = errorDetails;
             return;
         }
-        
+
         outState.connectionState = ConvertConnectionState((int)outState.svrControllerIndex);
+        //outState.connectionState = ConvertConnectionState(outState);
         outState.apiStatus = ConvertControllerApiStatus((int)outState.svrControllerIndex);
         
         if (outState.connectionState == GvrConnectionState.Connected || outState.connectionState == GvrConnectionState.ConnectedNotRecent)
@@ -165,25 +208,25 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
             pose3d.Set(Vector3.zero, rightrawOriQua);
             pose3d.SetRightHanded(pose3d.Matrix);
             rightlastRawOrientation = pose3d.Orientation;
-            if ((!initialRightRecenterDone || outState.recentered) && !rightlastRawOrientation.Equals(Quaternion.identity))
-            {
-                if (Camera.main != null)
-                {
-                    initialRightRecenterDone = true;
-                    isRightReadyRecentered = false;
-                    rightYawRotation = Camera.main.transform.rotation.eulerAngles - pose3d.Orientation.eulerAngles;
-                    rightYawRotation = Vector3.up * rightYawRotation.y;
-                    Vector3 RootRotation = Vector3.zero;
-                    if (Camera.main.transform.root)
-                    {
-                        if (Camera.main.transform.root.rotation != Quaternion.identity)
-                        {
-                            RootRotation = Camera.main.transform.root.rotation.eulerAngles.y * Vector3.up;
-                        }
-                        rightYawRotation = Vector3.up * rightYawRotation.y - RootRotation;
-                    }
-                }
-            }
+            //if ((!initialRightRecenterDone || outState.recentered) && !rightlastRawOrientation.Equals(Quaternion.identity))
+            //{
+            //    if (Camera.main != null)
+            //    {
+            //        initialRightRecenterDone = true;
+            //        isRightReadyRecentered = false;
+            //        rightYawRotation = Camera.main.transform.rotation.eulerAngles - pose3d.Orientation.eulerAngles;
+            //        rightYawRotation = Vector3.up * rightYawRotation.y;
+            //        Vector3 RootRotation = Vector3.zero;
+            //        if (Camera.main.transform.root)
+            //        {
+            //            if (Camera.main.transform.root.rotation != Quaternion.identity)
+            //            {
+            //                RootRotation = Camera.main.transform.root.rotation.eulerAngles.y * Vector3.up;
+            //            }
+            //            rightYawRotation = Vector3.up * rightYawRotation.y - RootRotation;
+            //        }
+            //    }
+            //}
             outState.orientation = /*Quaternion.Euler(rightYawRotation) */ rightlastRawOrientation;
             float[] rawOri = SvrControllerOrientation((int)outState.svrControllerIndex);
             float[] rawAccel = SvrControllerAccel((int)outState.svrControllerIndex);
@@ -194,6 +237,12 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
 
             SvrControllerUpdateState(outState, (int)outState.svrControllerIndex);
         }
+        else
+        {
+            outState.ClearTransientState();
+        }
+
+        UnityEngine.Profiling.Profiler.EndSample();
     }
 
     private void SvrControllerUpdateState(ControllerState outState, int index)
@@ -223,6 +272,15 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
         outState.triggerButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_TRIGGER);
         outState.triggerButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_TRIGGER);
         outState.triggerButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_TRIGGER);
+
+        outState.gripButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_GRIP);
+        outState.gripButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_GRIP);
+        outState.gripButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_GRIP);
+
+        outState.TouchPadUpButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadUp);
+        outState.TouchPadLeftButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadLeft);
+        outState.TouchPadDownButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadDown);
+        outState.TouchPadRightButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadRight);
 
         outState.isTouching = SvrControllerIsTouching(index);
         outState.touchDown = SvrControllerTouchDown(index);
@@ -257,17 +315,49 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
 
     }
 
+    private Thread jniThread;
+    private bool theadstart;
+    private Queue<Action> ExecuteQueue = new Queue<Action>();
     public void Init()
     {
         androidService = Svr.Controller.SvrController.Controller;
         error = androidService == null;
+
+        jniThread = new Thread(new ParameterizedThreadStart(MessageInThread));
+        theadstart = true;
+        //jniThread.Start();
+    }
+
+    void MessageInThread(object obj)
+    {
+        while (theadstart)
+        {
+            try
+            {
+                while (ExecuteQueue.Count > 0)
+                {
+                    ExecuteQueue.Dequeue().Invoke();
+                }
+            }
+            catch (Exception error)
+            {
+                Debug.LogError("Main Thread Queue Error Info=" + error);
+                ExecuteQueue.Clear();
+            }
+
+            Thread.Sleep(10);
+        }
+
+        Debug.Log("Controller Message thead destroy.");
+        
     }
 
     private GvrConnectionState ConvertConnectionState(int index)
     {
         //UnityEngine.Profiling.Profiler.BeginSample("A");
-        int connectionState = androidService.Call<int>("getConnectionState", index);
-        SvrLog.LogFormat("ConvertConnectionState:{0},{1}", index, connectionState);
+        //int connectionState = androidService.Call<int>("getConnectionState", index);
+        int connectionState = AndroidJNI.CallIntMethod(androidService.GetRawObject(), getConnectionState_methodID, GetControllerIndex(index));
+        //Debug.LogFormat("ConvertConnectionState:{0},{1}", index, connectionState);
         //UnityEngine.Profiling.Profiler.EndSample();
         switch (connectionState)
         {
@@ -286,12 +376,24 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
         }
     }
 
+    private jvalue[] GetControllerIndex(int index)
+    {
+        switch ((SvrControllerIndex)index)
+        {
+            case SvrControllerIndex.SVR_CONTROLLER_INDEX_RIGHT:
+                return svrControllerIndex_right_jvalue;
+            case SvrControllerIndex.SVR_CONTROLLER_INDEX_LEFT:
+                return svrControllerIndex_left_jvalue;
+            case SvrControllerIndex.SVR_CONTROLLER_INDEX_HEAD:
+                return svrControllerIndex_head_jvalue;
+            default:
+                return JNIUtils.nulljniArgs;
+        }
+    }
 
     private GvrControllerApiStatus ConvertControllerApiStatus(int gvrControllerApiStatus)
     {
         return GvrControllerApiStatus.Ok;
-
-
     }
 
     public enum SvrControllerHandedness
@@ -320,6 +422,12 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
         {
             initialRightRecenterDone = false;
             androidService.Call("release");
+            //ExecuteQueue.Enqueue(() => {
+
+            //    AndroidJNI.AttachCurrentThread();
+            //    androidService.Call("release");
+            //    AndroidJNI.DetachCurrentThread();
+            //});
         }
         catch (Exception)
         {
@@ -334,6 +442,12 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
         {
             initialRightRecenterDone = false;
             androidService.Call("init");
+            //ExecuteQueue.Enqueue(() => {
+
+            //    AndroidJNI.AttachCurrentThread();
+            //    androidService.Call("init");
+            //    AndroidJNI.DetachCurrentThread();
+            //});
         }
         catch (Exception)
         {
@@ -341,10 +455,15 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
         }
         
     }
-
+    
     public void Release()
     {
         //androidService.Call("release");
+    }
+
+    public void OnQuit()
+    {
+        theadstart = false;
     }
     //#endif  // !UNITY_HAS_GOOGLEVR || (!UNITY_ANDROID && !UNITY_EDITOR)
 }

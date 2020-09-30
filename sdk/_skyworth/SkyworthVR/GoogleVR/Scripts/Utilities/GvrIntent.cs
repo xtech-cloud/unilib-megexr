@@ -91,7 +91,33 @@ public static class GvrIntent
     return androidIntent.Call<string>("getStringExtra", str);
 #endif  // UNITY_EDITOR || !UNITY_ANDROID
     }
+    public static int GetIntExtra(string str, int _default)
+    {
+#if UNITY_EDITOR || !UNITY_ANDROID
+        return 0;
+#else
+    AndroidJavaObject androidIntent = GetIntent();
+    if (androidIntent == null) {
+      Debug.Log("Intent on current activity was null");
+      return 0;
+    }
+    return androidIntent.Call<int>("getIntExtra", str,_default);
+#endif  // UNITY_EDITOR || !UNITY_ANDROID
+    }
 
+    public static bool GetBooleanExtra(string str, bool _default)
+    {
+#if UNITY_EDITOR || !UNITY_ANDROID
+        return false;
+#else
+    AndroidJavaObject androidIntent = GetIntent();
+    if (androidIntent == null) {
+      Debug.Log("Intent on current activity was null");
+      return false;
+    }
+    return androidIntent.Call<bool>("getBooleanExtra", str,_default);
+#endif  // UNITY_EDITOR || !UNITY_ANDROID
+    }
 
     // Returns true if the intent category contains "android.intent.extra.VR_LAUNCH".
     public static bool IsLaunchedFromVr()

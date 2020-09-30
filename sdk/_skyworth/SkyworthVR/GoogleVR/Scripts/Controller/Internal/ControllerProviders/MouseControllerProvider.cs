@@ -201,5 +201,9 @@ namespace Gvr.Internal {
       state.appButtonUp = false;
       ClearTouchPos();
     }
-  }
+
+        public void OnQuit()
+        {
+        }
+    }
 }

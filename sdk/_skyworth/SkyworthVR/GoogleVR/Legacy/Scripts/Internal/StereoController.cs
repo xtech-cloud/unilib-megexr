@@ -250,6 +250,9 @@ public class StereoController : MonoBehaviour
 #if !HAS_GOOGLEVR || UNITY_EDITOR
     void Awake()
     {
+#if UNITY_EDITOR
+        //Svr.SvrSetting.SetVR9(true);
+#endif
         // we sync in the TimeWarp, so we don't want unity
         // syncing elsewhere
         if (!Svr.SvrSetting.IsVR9Device)
@@ -260,11 +263,18 @@ public class StereoController : MonoBehaviour
     Application.targetFrameRate = GvrDevice.GetDeviceConfig("targetFrameRate");
 #endif
         }
+        else
+        {
+            QualitySettings.vSyncCount = 0;
+            QualitySettings.antiAliasing = 0;
+            Application.targetFrameRate = SVR.AtwAPI.display_refresh_rate;
+        }
         Debug.Log("vSyncCount:" + QualitySettings.vSyncCount + " antiAliasing: " + QualitySettings.antiAliasing);
         // don't allow the app to run in the background
         Application.runInBackground = false;
         cam = GetComponent<Camera>();
         cam.enabled = true;
+        
         GvrViewer.Create();
 
         if (Svr.SvrSetting.IsVR9Device)
@@ -327,6 +337,13 @@ public class StereoController : MonoBehaviour
             // you may unexpectedly find your camera pinned to the origin.
             head.trackPosition = false;
         }
+
+        if (Svr.SvrSetting.IsVR9Device)
+        {
+            //cam.enabled = false;
+            cam.clearFlags = CameraClearFlags.Depth;
+            cam.cullingMask = 0;
+        }
     }
 
     /// Updates the stereo cameras from the mono camera every frame.  This includes all Camera
@@ -348,10 +365,12 @@ public class StereoController : MonoBehaviour
         string nm = name + (eye == GvrViewer.Eye.Left ? " Left" : " Right");
         GameObject go = new GameObject(nm);
         go.transform.SetParent(transform, false);
-        go.AddComponent<Camera>().enabled = false;
+        go.AddComponent<Camera>().enabled = Svr.SvrSetting.IsVR9Device;
         var GvrEye = go.AddComponent<GvrEye>();
         GvrEye.eye = eye;
         GvrEye.CopyCameraAndMakeSideBySide(this);
+
+        
     }
 #endif  // !HAS_GOOGLEVR || UNITY_EDITOR
 
@@ -408,7 +427,8 @@ public class StereoController : MonoBehaviour
         if (BaseVRDevice.IsSupported) return;
 #endif
 #if UNITY_ANDROID && !UNITY_EDITOR
-        StartCoroutine("EndOfFrame");
+        if(!Svr.SvrSetting.IsVR9Device)
+            StartCoroutine("EndOfFrame");
 #endif
     }
 
@@ -419,7 +439,8 @@ public class StereoController : MonoBehaviour
         if (BaseVRDevice.IsSupported) return;
 #endif
 #if UNITY_ANDROID && !UNITY_EDITOR
-        StopCoroutine("EndOfFrame");
+        if(!Svr.SvrSetting.IsVR9Device)
+            StopCoroutine("EndOfFrame");
 #endif
     }
 
@@ -430,6 +451,8 @@ public class StereoController : MonoBehaviour
         if (BaseVRDevice.IsSupported) return;
 #endif
 #if UNITY_ANDROID && !UNITY_EDITOR
+        if(Svr.SvrSetting.IsVR9Device) return;
+        
         if (GvrViewer.Instance.VRModeEnabled)
         {
             // Activate the eyes under our control.
@@ -453,12 +476,17 @@ public class StereoController : MonoBehaviour
     }
     private void OnPreRender()
     {
-        GvrViewer.Instance.OnPreRender();
+        if (!Svr.SvrSetting.IsVR9Device)
+        {
+            GvrViewer.Instance.OnPreRender();
+        }
+        
     }
     private void OnPostRender()
     {
 #if UNITY_2017_3_OR_NEWER
 #else
+         if (Svr.SvrSetting.IsVR9Device) return;
         GvrViewer.Instance.PostRender(GvrViewer.Instance.StereoScreen);
         GvrViewer.Instance.StereoScreen.DiscardContents();
         GvrViewer.Instance.StereoScreen.NextRenderTexture();

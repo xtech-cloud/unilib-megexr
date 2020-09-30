@@ -340,7 +340,7 @@ namespace Gvr.Internal {
         gvr_controller_resume(api);
       }
     }
-
+    public void OnQuit(){}
     private GvrConnectionState ConvertConnectionState(int connectionState) {
       switch (connectionState) {
         case GVR_CONTROLLER_CONNECTED:

@@ -174,7 +174,11 @@ namespace Gvr.Internal {
         state.recentered = true;
       }
     }
-  }
+
+        public void OnQuit()
+        {
+        }
+    }
 }
 /// @endcond
 

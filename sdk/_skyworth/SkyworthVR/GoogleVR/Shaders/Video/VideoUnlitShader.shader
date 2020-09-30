@@ -40,6 +40,7 @@ Shader "GoogleVR/Video Unlit Shader" {
 
         #pragma multi_compile ___ _STEREOMODE_TOPBOTTOM _STEREOMODE_LEFTRIGHT
         #pragma multi_compile ___ FLIP_X
+		#pragma multi_compile ___ USE_STEREO
 
         precision mediump int;
         precision mediump float;
@@ -57,15 +58,19 @@ Shader "GoogleVR/Video Unlit Shader" {
             #endif  // FLIP_X
             #ifdef _STEREOMODE_TOPBOTTOM
               untransformedUV.y *= 0.5;
+#ifdef USE_STEREO
               if (Svr_StereoEyeIndex == 0) {
                 untransformedUV.y += 0.5;
               }
+#endif
             #endif  // _STEREOMODE_TOPBOTTOM
             #ifdef _STEREOMODE_LEFTRIGHT
               untransformedUV.x *= 0.5;
+#ifdef USE_STEREO
               if (Svr_StereoEyeIndex != 0) {
                 untransformedUV.x += 0.5;
               }
+#endif
             #endif  // _STEREOMODE_LEFTRIGHT
 
             uv = (video_matrix * untransformedUV).xy;

@@ -93,11 +93,11 @@ public class GvrTrackedController : MonoBehaviour
     {
         SVR.AtwAPI.BeginTrace("track-awake");
         mBasePointer = GetComponentInChildren<GvrBasePointer>();
-//#if NOLOSDK
+        //#if NOLOSDK
         GvrControllerInput.OnConterollerChanged += GvrControllerInput_OnConterollerChanged;
-//#else
-//        GvrControllerInput.OnStateChanged += OnControllerStateChanged;
-//#endif
+        //#else
+        //        GvrControllerInput.OnStateChanged += OnControllerStateChanged;
+        //#endif
         UpdatePose();
         GvrControllerInput.OnGvrPointerEnable += GvrControllerInput_OnGvrPointerEnable;
         SVR.AtwAPI.EndTrace();
@@ -108,17 +108,27 @@ public class GvrTrackedController : MonoBehaviour
         if (GvrControllerInput.SvrState == SvrControllerState.GvrController)
         {
             gameObject.SetActive(obj);
+            UpdateChildTransform();
             GvrPointerInputModule.Pointer = obj ? mBasePointer : null;
         }
-            
+
     }
 
+    private void UpdateChildTransform()
+    {
+        if (gameObject.activeInHierarchy)
+        {
+            transform.GetChild(0).gameObject.SetActive(true);
+            transform.GetChild(1).gameObject.SetActive(true);
+        }
+    }
     private void GvrControllerInput_OnConterollerChanged(SvrControllerState state, SvrControllerState oldState)
     {
         SvrControllerState target = SvrControllerState.NoloLeftContoller | SvrControllerState.NoloRightContoller;
         if ((state & target) != 0)
         {
             gameObject.SetActive(false);
+            UpdateChildTransform();
             if (GvrPointerInputModule.Pointer == mBasePointer)
             {
                 GvrPointerInputModule.Pointer = null;
@@ -130,6 +140,7 @@ public class GvrTrackedController : MonoBehaviour
             if (isDeactivatedWhenDisconnected && enabled)
             {
                 gameObject.SetActive(state == SvrControllerState.GvrController);
+                UpdateChildTransform();
                 if (gameObject.activeSelf)
                 {
                     GvrPointerInputModule.Pointer = GetComponentInChildren<GvrBasePointer>();
@@ -141,7 +152,7 @@ public class GvrTrackedController : MonoBehaviour
                         GvrPointerInputModule.Pointer = null;
                     }
                 }
-                    
+
             }
         }
     }
@@ -175,21 +186,21 @@ public class GvrTrackedController : MonoBehaviour
     void Start()
     {
         PropagateArmModel();
-//#if NOLOSDK
+        //#if NOLOSDK
         GvrControllerInput_OnConterollerChanged(GvrControllerInput.SvrState, GvrControllerInput.SvrState);
-//#else
-//        OnControllerStateChanged(GvrControllerInput.State, GvrControllerInput.State);
-//#endif
+        //#else
+        //        OnControllerStateChanged(GvrControllerInput.State, GvrControllerInput.State);
+        //#endif
     }
 
     void OnDestroy()
     {
         GvrControllerInput.OnGvrPointerEnable -= GvrControllerInput_OnGvrPointerEnable;
-//#if NOLOSDK
+        //#if NOLOSDK
         GvrControllerInput.OnConterollerChanged -= GvrControllerInput_OnConterollerChanged;
-//#else
-//        GvrControllerInput.OnStateChanged -= OnControllerStateChanged;
-//#endif
+        //#else
+        //        GvrControllerInput.OnStateChanged -= OnControllerStateChanged;
+        //#endif
     }
 
     private void OnPostControllerInputUpdated()
@@ -202,6 +213,7 @@ public class GvrTrackedController : MonoBehaviour
         if (isDeactivatedWhenDisconnected && enabled)
         {
             gameObject.SetActive(state == GvrConnectionState.Connected);
+            UpdateChildTransform();
             if (gameObject.activeSelf)
                 GvrPointerInputModule.Pointer = GetComponentInChildren<GvrBasePointer>();
         }

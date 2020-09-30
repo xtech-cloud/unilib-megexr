@@ -87,9 +87,9 @@ public class GvrReticlePointer : GvrBasePointer
     {
         SetPointerTarget(raycastResultResult.worldPosition, isInteractive);
         if (OnPointerHoverEvent != null) OnPointerHoverEvent.Invoke(raycastResultResult);
-        if (Svr.SvrSetting.IsVR9Device)
-            SVR.AtwAPI.SetScreenPoint(GvrViewer.Controller.Eyes[0].cam.WorldToScreenPoint(raycastResultResult.worldPosition).x,
-                GvrViewer.Controller.Eyes[1].cam.WorldToScreenPoint(raycastResultResult.worldPosition).x);
+        //if (Svr.SvrSetting.IsVR9Device)
+        //    SVR.AtwAPI.SetScreenPoint(GvrViewer.Controller.Eyes[0].cam.WorldToScreenPoint(raycastResultResult.worldPosition).x,
+        //        GvrViewer.Controller.Eyes[1].cam.WorldToScreenPoint(raycastResultResult.worldPosition).x);
     }
 
     public override void OnPointerExit(GameObject previousObject)
@@ -170,6 +170,7 @@ public class GvrReticlePointer : GvrBasePointer
                 SVR.AtwAPI.ShowDualSurface(obj);
             else
                 GetComponent<Renderer>().enabled = obj;
+
         }
             
     }
@@ -198,7 +199,18 @@ public class GvrReticlePointer : GvrBasePointer
             if (enabled)
             {
                 gameObject.SetActive(true);
-                SVR.AtwAPI.ShowDualSurface(true);
+                //SVR.AtwAPI.ShowDualSurface(true);
+
+                if (Svr.SvrSetting.IsVR9Device)
+                {
+                    SVR.AtwAPI.ShowDualSurface(true);
+                }
+                else
+                {
+                    Renderer renderer = GetComponent<Renderer>();
+                    if (renderer != null)
+                        renderer.enabled = true;
+                }
                 //Svr.SvrLog.Log("ShowDualSurface true");
                 if (gameObject.activeSelf)
                 {

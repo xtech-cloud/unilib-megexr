@@ -324,7 +324,7 @@ public class GvrPointerInputModuleImpl
                 if (isPointerActiveAndAvailable)
                 {
                     Pointer.OnPointerEnter(CurrentEventData.pointerCurrentRaycast, isInteractive);
-                    SVR.AtwAPI.OnHover(true);
+                    if(isInteractive) SVR.AtwAPI.OnHover(true);
                 }
                 isPointerHovering = true;
             }

@@ -29,7 +29,11 @@ namespace Gvr.Internal {
     }
     public void OnPause() {}
     public void OnResume() {}
-  }
+
+        public void OnQuit()
+        {
+        }
+    }
 }
 /// @endcond
 
