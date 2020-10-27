@@ -326,7 +326,7 @@ public class GvrEye : MonoBehaviour
         if (Svr.SvrSetting.IsVR9Device)
         {
             cam.fieldOfView = GvrProfile.Default.viewer.FOV;
-            cam.clearFlags = CameraClearFlags.Depth;
+            //cam.clearFlags = CameraClearFlags.Depth;
             Svr.SvrLog.Log("fieldOfView:" + cam.fieldOfView);
         }
 
