@@ -16,6 +16,7 @@
 /// VR player is the in-editor emulator.
 
 using UnityEngine;
+using UnityEngine.Rendering;
 
 /// Controls one camera of a stereo pair.  Each frame, it mirrors the settings of
 /// the parent mono Camera, and then sets up side-by-side stereo with
@@ -123,8 +124,48 @@ public class GvrEye : MonoBehaviour
             stereoEffect.enabled = false;
         }
 
+#if UNITY_2019_1_OR_NEWER
+        RenderPipelineManager.beginCameraRendering += RenderPipelineManager_beginCameraRendering;
+        RenderPipelineManager.endCameraRendering += RenderPipelineManager_endCameraRendering;
+#endif
     }
 
+   
+#if UNITY_2019_1_OR_NEWER
+    private void RenderPipelineManager_beginCameraRendering(ScriptableRenderContext arg1, Camera arg2)
+    {
+        if (arg2 == cam)
+        {
+            if (eye == GvrViewer.Eye.Left)
+            {
+                Shader.SetGlobalInt("Svr_StereoEyeIndex", 0);
+            }
+            else
+            {
+                Shader.SetGlobalInt("Svr_StereoEyeIndex", 1);
+
+            }
+        }
+    }
+    private void RenderPipelineManager_endCameraRendering(ScriptableRenderContext arg1, Camera arg2)
+    {
+        if (arg2 == cam)
+        {
+            Shader.DisableKeyword("GVR_DISTORTION");
+            if (Svr.SvrSetting.IsVR9Device && eye == GvrViewer.Eye.Right)
+            {
+                Quaternion quaternion = GvrViewer.Instance.HeadPose.Orientation;
+                avrPose.x = -quaternion.x;
+                avrPose.y = -quaternion.y;
+                avrPose.z = quaternion.z;
+                avrPose.w = quaternion.w;
+                SVR.AtwAPI.SetVrThread();
+                SVR.AtwAPI.PrepareFrame(avrPose);
+                SVR.AtwAPI.PostRender();
+            }
+        }
+    }
+#endif
     public void UpdateStereoValues()
     {
         Matrix4x4 proj = GvrViewer.Instance.Projection(eye);
@@ -155,36 +196,35 @@ public class GvrEye : MonoBehaviour
 
         // Draw to the mono camera's target, or the stereo screen.
         //cam.targetTexture = monoCamera.targetTexture ?? GvrViewer.Instance.StereoScreen.GetRenderTexture(0);
-        if (!Svr.SvrSetting.IsVR9Device)
+#if !SVR_VR9
+        if (monoCamera.targetTexture == null && GvrViewer.Instance.StereoScreen != null)
         {
-            if (monoCamera.targetTexture == null && GvrViewer.Instance.StereoScreen != null)
-            {
-                //	  GvrViewer.Instance.StereoScreen.NextRenderTexture ();
-                cam.targetTexture = GvrViewer.Instance.StereoScreen.GetRenderTexture(0);
-            }
-            else
-            {
-                cam.targetTexture = monoCamera.targetTexture;
-            }
-            if (cam.targetTexture == null)
-            {
-                // When drawing straight to screen, account for lens FOV limits.
-                // Note: do this after all calls to FixProjection() which needs the unfixed rect.
-                Rect viewport = GvrViewer.Instance.Viewport(eye);
-                bool isRightEye = eye == GvrViewer.Eye.Right;
-                cam.rect = GvrCameraUtils.FixViewport(cam.rect, viewport, isRightEye);
+            //	  GvrViewer.Instance.StereoScreen.NextRenderTexture ();
+            cam.targetTexture = GvrViewer.Instance.StereoScreen.GetRenderTexture((int)eye);
+        }
+        else
+        {
+            cam.targetTexture = monoCamera.targetTexture;
+        }
+        if (cam.targetTexture == null)
+        {
+            // When drawing straight to screen, account for lens FOV limits.
+            // Note: do this after all calls to FixProjection() which needs the unfixed rect.
+            Rect viewport = GvrViewer.Instance.Viewport(eye);
+            bool isRightEye = eye == GvrViewer.Eye.Right;
+            cam.rect = GvrCameraUtils.FixViewport(cam.rect, viewport, isRightEye);
 
-                // The game window's aspect ratio may not match the device profile parameters.
-                if (Application.isEditor)
-                {
-                    GvrProfile.Screen profileScreen = GvrViewer.Instance.Profile.screen;
-                    float profileAspect = profileScreen.width / profileScreen.height;
-                    float windowAspect = (float)Screen.width / Screen.height;
-                    cam.rect = GvrCameraUtils.FixEditorViewport(cam.rect, profileAspect, windowAspect);
-                }
+            // The game window's aspect ratio may not match the device profile parameters.
+            if (Application.isEditor)
+            {
+                GvrProfile.Screen profileScreen = GvrViewer.Instance.Profile.screen;
+                float profileAspect = profileScreen.width / profileScreen.height;
+                float windowAspect = (float)Screen.width / Screen.height;
+                cam.rect = GvrCameraUtils.FixEditorViewport(cam.rect, profileAspect, windowAspect);
             }
         }
-        
+#endif
+
     }
 
     private void SetupStereo(bool forceUpdate)
@@ -284,16 +324,23 @@ public class GvrEye : MonoBehaviour
     void OnPostRender()
     {
         Shader.DisableKeyword("GVR_DISTORTION");
-        if (Svr.SvrSetting.IsVR9Device && eye == GvrViewer.Eye.Right)
+        if (eye == GvrViewer.Eye.Right) 
         {
-            Quaternion quaternion = GvrViewer.Instance.HeadPose.Orientation;
-            avrPose.x = -quaternion.x;
-            avrPose.y = -quaternion.y;
-            avrPose.z = quaternion.z;
-            avrPose.w = quaternion.w;
-            SVR.AtwAPI.SetVrThread();
-            SVR.AtwAPI.PrepareFrame(avrPose);
-            SVR.AtwAPI.PostRender();
+            if (Svr.SvrSetting.IsVR9Device)
+            {
+                Quaternion quaternion = GvrViewer.Instance.HeadPose.Orientation;
+                avrPose.x = -quaternion.x;
+                avrPose.y = -quaternion.y;
+                avrPose.z = quaternion.z;
+                avrPose.w = quaternion.w;
+                SVR.AtwAPI.SetVrThread();
+                SVR.AtwAPI.PrepareFrame(avrPose);
+                SVR.AtwAPI.PostRender();
+            }
+            else
+            {
+                SVR.AtwAPI.PostRender();
+            }
         }
     }
 
@@ -326,7 +373,7 @@ public class GvrEye : MonoBehaviour
         if (Svr.SvrSetting.IsVR9Device)
         {
             cam.fieldOfView = GvrProfile.Default.viewer.FOV;
-            //cam.clearFlags = CameraClearFlags.Depth;
+            cam.clearFlags = CameraClearFlags.Depth;
             Svr.SvrLog.Log("fieldOfView:" + cam.fieldOfView);
         }
 
@@ -356,6 +403,7 @@ public class GvrEye : MonoBehaviour
             customSkybox = null;
         }
 
+#if SVR_VR9
         // Set up side-by-side stereo.
         // Note: The code is written this way so that non-fullscreen cameras
         // (PIP: picture-in-picture) still work in stereo.  Even if the PIP's content is
@@ -393,6 +441,7 @@ public class GvrEye : MonoBehaviour
         }
 
         cam.rect = rect;
+#endif
     }
 #endif  // !HAS_GOOGLEVR || UNITY_EDITOR
 

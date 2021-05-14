@@ -159,6 +159,7 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
     internal SvrAndroidServiceControllerProvider()
     {
         SvrLog.Log("SvrAndroidServiceControllerProvider");
+        Svr.Controller.SvrController.InitController();
         Init();
 
         getQuaternion_methodID = AndroidJNIHelper.GetMethodID(androidService.GetRawClass(), "getQuaternion", "(I)[F", false);
@@ -234,7 +235,7 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
 
             outState.accel = new Vector3(rawAccel[0], rawAccel[1], rawAccel[2]);
             outState.gyro = new Vector3(-rawGyro[0], -rawGyro[1], rawGyro[2]);
-
+            outState.position = outState.accel;
             SvrControllerUpdateState(outState, (int)outState.svrControllerIndex);
         }
         else
@@ -257,59 +258,67 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
 
         outState.apiStatus = ConvertControllerApiStatus(index);
 
-        outState.appButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_APP);
-        outState.appButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_APP);
-        outState.appButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_APP);
+        if (outState.connectionState == GvrConnectionState.Connected)
+        {
+            outState.appButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_APP);
+            outState.appButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_APP);
+            outState.appButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_APP);
+
+
+
+            outState.clickButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_CLICK);
+            outState.clickButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_CLICK);
+            outState.clickButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_CLICK);
+
+
+            outState.triggerButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_TRIGGER);
+            outState.triggerButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_TRIGGER);
+            outState.triggerButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_TRIGGER);
+
+            outState.gripButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_GRIP);
+            outState.gripButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_GRIP);
+            outState.gripButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_GRIP);
+
+            outState.TouchPadUpButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadUp);
+            outState.TouchPadLeftButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadLeft);
+            outState.TouchPadDownButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadDown);
+            outState.TouchPadRightButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadRight);
+
+            outState.isTouching = SvrControllerIsTouching(index);
+            outState.touchDown = SvrControllerTouchDown(index);
+            outState.touchUp = SvrControllerTouchUp(index);
+
+            outState.triggervalue = outState.gyro.z;
+
+            int battery = SvrGetBattery(index);
+            outState.batteryValue = battery;
+            if (battery >= 20 * 4)
+            {
+                outState.batteryLevel = GvrControllerBatteryLevel.Full;
+            }
+            else if (battery > 20 * 3)
+            {
+                outState.batteryLevel = GvrControllerBatteryLevel.AlmostFull;
+            }
+            else if (battery >= 20 * 2)
+            {
+                outState.batteryLevel = GvrControllerBatteryLevel.Medium;
+            }
+            else if (battery >= 20)
+            {
+                outState.batteryLevel = GvrControllerBatteryLevel.Low;
+            }
+            else
+            {
+                outState.batteryLevel = GvrControllerBatteryLevel.CriticalLow;
+            }
+        }
+
+        outState.recentered = SvrControllerRecentered(index);
 
         outState.homeButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_HOME);
         outState.homeButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_HOME);
         outState.homeButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_HOME);
-
-        outState.clickButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_CLICK);
-        outState.clickButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_CLICK);
-        outState.clickButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_CLICK);
-
-        outState.triggerButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_TRIGGER);
-        outState.triggerButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_TRIGGER);
-        outState.triggerButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_TRIGGER);
-
-        outState.gripButtonDown = SvrControllerButtonDown(index, SVR_CONTROLLER_BUTTON_GRIP);
-        outState.gripButtonState = SvrControllerButtonState(index, SVR_CONTROLLER_BUTTON_GRIP);
-        outState.gripButtonUp = SvrControllerButtonUp(index, SVR_CONTROLLER_BUTTON_GRIP);
-
-        outState.TouchPadUpButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadUp);
-        outState.TouchPadLeftButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadLeft);
-        outState.TouchPadDownButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadDown);
-        outState.TouchPadRightButtonState = (outState.gyro.x == SVR_CONTROLLER_BUTTON_TouchPadRight);
-
-        outState.isTouching = SvrControllerIsTouching(index);
-        outState.touchDown = SvrControllerTouchDown(index);
-        outState.touchUp = SvrControllerTouchUp(index);
-
-        outState.recentered = SvrControllerRecentered(index);
-
-        int battery = SvrGetBattery(index);
-        outState.batteryValue = battery;
-        if (battery >= 20 * 4)
-        {
-            outState.batteryLevel = GvrControllerBatteryLevel.Full;
-        }
-        else if (battery > 20 * 3)
-        {
-            outState.batteryLevel = GvrControllerBatteryLevel.AlmostFull;
-        }
-        else if (battery >= 20 * 2)
-        {
-            outState.batteryLevel = GvrControllerBatteryLevel.Medium;
-        }
-        else if (battery >= 20)
-        {
-            outState.batteryLevel = GvrControllerBatteryLevel.Low;
-        }
-        else
-        {
-            outState.batteryLevel = GvrControllerBatteryLevel.CriticalLow;
-        }
 
         outState.errorDetails = "";
 
@@ -464,6 +473,15 @@ public class SvrAndroidServiceControllerProvider : IControllerProvider
     public void OnQuit()
     {
         theadstart = false;
+    }
+
+    public void ReadState(ControllerState controllerStateLeft, ControllerState controllerStateRight, ControllerState controllerStateHead)
+    {
+        //Debug.Log("xxxx ReadState");
+        Svr.Controller.SvrController.CallBegin();
+        ReadState(controllerStateRight);
+        ReadState(controllerStateLeft);
+        ReadState(controllerStateHead);
     }
     //#endif  // !UNITY_HAS_GOOGLEVR || (!UNITY_ANDROID && !UNITY_EDITOR)
 }

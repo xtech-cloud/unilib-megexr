@@ -35,6 +35,8 @@ namespace Gvr.Internal
         void OnQuit();
         /// Reads the controller's current state and stores it in outState.
         void ReadState(ControllerState outState);
+        void ReadState(ControllerState leftState, ControllerState rightState, ControllerState headState);
+
 
     }
 }

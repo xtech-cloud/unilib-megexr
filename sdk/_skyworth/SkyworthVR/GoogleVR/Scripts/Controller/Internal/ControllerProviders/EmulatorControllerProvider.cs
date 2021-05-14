@@ -178,6 +178,11 @@ namespace Gvr.Internal {
         public void OnQuit()
         {
         }
+
+        public void ReadState(ControllerState leftState, ControllerState rightState, ControllerState headState)
+        {
+            ReadState(rightState);
+        }
     }
 }
 /// @endcond

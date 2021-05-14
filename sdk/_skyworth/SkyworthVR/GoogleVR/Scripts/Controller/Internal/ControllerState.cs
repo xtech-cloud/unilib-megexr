@@ -30,11 +30,25 @@ namespace Gvr.Internal
         internal SvrControllerIndex svrControllerIndex = SvrControllerIndex.SVR_CONTROLLER_INDEX_RIGHT;
         internal GvrConnectionState connectionState = GvrConnectionState.Disconnected;
         internal GvrControllerApiStatus apiStatus = GvrControllerApiStatus.Unavailable;
-        internal Quaternion orientation = Quaternion.identity;
+        private Quaternion mOrientation = Quaternion.identity;
+        internal Quaternion orientation
+        {
+            get
+            {
+                return RecentQuaternion * mOrientation;
+            }
+            set
+            {
+                mOrientation = value;
+            }
+        }
+        internal Vector3 position = Vector3.zero;
         internal Vector3 gyro = Vector3.zero;
         internal Vector3 accel = Vector3.zero;
         internal bool isTouching = false;
         internal Vector2 touchPos = Vector2.zero;
+        internal float triggervalue = 0;
+        internal float gripvalue = 0;
         internal bool touchDown = false;
         internal bool touchUp = false;
         internal bool recentered = false;
@@ -80,6 +94,9 @@ namespace Gvr.Internal
         public GvrControllerBatteryLevel BatteryLevel { get { return batteryLevel; } }
         internal int batteryValue;
         public int BatteryValue { get { return batteryValue; } }
+        public Svr.Controller.ControllerState mControllerState;
+        public Svr.Controller.ControllerState mpreControllerState;
+        private Quaternion RecentQuaternion = Quaternion.identity;
         public ControllerState(SvrControllerIndex index)
         {
             svrControllerIndex = index;
@@ -130,6 +147,9 @@ namespace Gvr.Internal
             gvrPtr = other.gvrPtr;
             isCharging = other.isCharging;
             batteryLevel = other.batteryLevel;
+
+            triggervalue = other.triggervalue;
+            gripvalue = other.gripvalue;
         }
 
         /// Resets the transient state (the state variables that represent events, and which are true
@@ -147,6 +167,24 @@ namespace Gvr.Internal
             homeButtonUp = false;
             triggerButtonDown = false;
             triggerButtonUp = false;
+            mpreControllerState = mControllerState;
+            mControllerState = null;
+            connectionState = GvrConnectionState.Disconnected;
+
+            position = Vector3.zero;
+        }
+
+        public void Recent()
+        {
+            if (Vector3.Dot(Vector3.up, Quaternion.Euler(GvrViewer.Instance.HeadPose.Orientation.eulerAngles.x, 0, 0) * Vector3.forward) > 0
+            && Vector3.Angle(Quaternion.Euler(GvrViewer.Instance.HeadPose.Orientation.eulerAngles.x, 0, 0) * Vector3.forward, Vector3.forward) > 45)
+            {
+                RecentQuaternion = Quaternion.Inverse(mOrientation);
+            }
+            else
+            {
+                RecentQuaternion = Quaternion.Inverse(Quaternion.Euler(0, mOrientation.eulerAngles.y, 0));
+            }
         }
     }
 }

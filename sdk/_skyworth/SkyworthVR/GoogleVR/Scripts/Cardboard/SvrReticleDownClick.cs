@@ -12,6 +12,7 @@ public class SvrReticleDownClick : MonoBehaviour
     private MeshRenderer mSelfRenderer;
 
     public Material MaterialComp { get; private set; }
+    public bool OnelySvrAutoClickEnable = false;
     private readonly float DEFALUTCOUNT = 1f;
     private float mEnterTime = 0;
     private float mTargetTime;
@@ -99,13 +100,22 @@ public class SvrReticleDownClick : MonoBehaviour
     }
     private void GvrReticlePointer_OnPointerEnterEvent(RaycastResult raycastResult)
     {
+        GvrPointerInputModule module = EventSystem.current.currentInputModule as GvrPointerInputModule;
+        if (OnelySvrAutoClickEnable)
+        {
+            GameObject clickenable = module.EventExecutor.GetEventHandler<ISvrAutoClickEnable>(raycastResult.gameObject);
+            if (!clickenable)
+            {
+                return;
+            }
+        }
         raycastResultObj = null;
         mEnterTime = Time.time;
         MaterialComp.SetFloat("_FillAmount", 0);
         manger = 0;
         //EventExcuted = false;
         EventExcuteCount = 0;
-        GvrPointerInputModule module = EventSystem.current.currentInputModule as GvrPointerInputModule;
+
         GameObject click = module.EventExecutor.GetEventHandler<IPointerClickHandler>(raycastResult.gameObject);
         if (click)
         {

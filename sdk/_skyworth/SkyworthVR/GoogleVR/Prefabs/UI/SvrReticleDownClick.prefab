@@ -86,3 +86,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff134ae3335521846a1fe22a524428d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnelySvrAutoClickEnable: 1

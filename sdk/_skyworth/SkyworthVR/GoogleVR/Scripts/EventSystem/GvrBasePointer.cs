@@ -176,7 +176,10 @@ public abstract class GvrBasePointer : MonoBehaviour
     {
         get
         {
-            bool isTriggerDown = Input.GetMouseButtonDown(0);
+            bool isTriggerDown = false;
+#if UNITY_EDITOR
+            isTriggerDown = Input.GetMouseButtonDown(0);
+#endif
             if (GazeModeEnable)
             {
                 //if ((GvrControllerInput.GazeKeyClickType & SvrGazeKeyClikeaType.BackeAsClick) != 0)
@@ -185,9 +188,7 @@ public abstract class GvrBasePointer : MonoBehaviour
                 //    isTriggerDown = isTriggerDown || PointTriggerDown;
                 isTriggerDown = isTriggerDown || PointTriggerDown;
             }
-#if SVR_KEYCLICK
-            isTriggerDown = isTriggerDown || Input.GetKeyDown(KeyCode.Escape);
-#endif
+
 
             return isTriggerDown || GvrControllerInput.ClickButtonDown || GvrControllerInput.TriggerButtonDown;
         }
@@ -201,10 +202,10 @@ public abstract class GvrBasePointer : MonoBehaviour
     {
         get
         {
-#if SVR_KEYCLICK
-      bool isTriggering = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Escape);
-#else
-            bool isTriggering = Input.GetMouseButton(0) || Input.GetKey(KeyCode.KeypadEnter);
+
+            bool isTriggering = false;
+#if UNITY_EDITOR
+            isTriggering = Input.GetMouseButton(0) || Input.GetKey(KeyCode.KeypadEnter);
 #endif
 
             return isTriggering || GvrControllerInput.ClickButton || GvrControllerInput.TriggerButton;
@@ -218,10 +219,10 @@ public abstract class GvrBasePointer : MonoBehaviour
     {
         get
         {
-#if SVR_KEYCLICK
-            bool isTriggerDown = Input.GetMouseButtonUp(0) || Input.GetKeyUp(KeyCode.Escape);
-#else
-            bool isTriggerDown = Input.GetMouseButtonUp(0);
+
+            bool isTriggerDown = false;
+#if UNITY_EDITOR
+            isTriggerDown = Input.GetMouseButtonUp(0);
 #endif
 
             return isTriggerDown || GvrControllerInput.ClickButtonUp || GvrControllerInput.TriggerButtonUp;

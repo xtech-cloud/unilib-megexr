@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_2019_3_OR_NEWER
+using UnityEngine.XR;
+#endif
 
 /// This script provides head tracking support for a camera.
 ///
@@ -34,6 +38,37 @@ using UnityEngine;
 [AddComponentMenu("GoogleVR/GvrHead")]
 public class GvrHead : MonoBehaviour
 {
+    /// <summary>
+    /// The update type being used by the tracked pose driver
+    /// </summary>
+    public enum UpdateType
+    {
+        /// <summary>
+        /// Sample input at both update, and directly before rendering. For smooth head pose tracking, 
+        /// we recommend using this value as it will provide the lowest input latency for the device. 
+        /// This is the default value for the UpdateType option
+        /// </summary>
+        UpdateAndBeforeRender,
+        /// <summary>
+        /// Only sample input during the update phase of the frame.
+        /// </summary>
+        Update,
+        /// <summary>
+        /// Only sample input directly before rendering
+        /// </summary>
+        BeforeRender,
+    }
+
+    [SerializeField]
+    UpdateType m_UpdateType = UpdateType.UpdateAndBeforeRender;
+    /// <summary>
+    /// The update type being used by the tracked pose driver
+    /// </summary>
+    public UpdateType updateType
+    {
+        get { return m_UpdateType; }
+        set { m_UpdateType = value; }
+    }
     /// Determines whether to apply the user's head rotation to this gameobject's
     /// orientation.  True means to update the gameobject's orientation with the
     /// user's head rotation, and false means don't modify the gameobject's orientation.
@@ -90,66 +125,116 @@ public class GvrHead : MonoBehaviour
         SvrTrackDevices.mTracks.Add(gameObject);
     }
 
-    private bool updated;
     private Quaternion m_TargetRotation;
     private Quaternion m_PreviousRotation;
     private bool m_Recentering;
     private bool readCount;
     public static Quaternion orientation = new Quaternion();
-    private Matrix4x4 mAdjust = Matrix4x4.identity;
-    public Matrix4x4 CurrentAdjust { get { return mAdjust; } }
+    private Quaternion mAdjustOritation = Quaternion.identity;
+    public Quaternion CurrentAdjustOritation { get { return mAdjustOritation; } }
+#if UNITY_2019_3_OR_NEWER
+    static internal List<XRNodeState> nodeStates = new List<XRNodeState>();
+#endif
+    //private int NeedToRecenter = 5;
+    //private bool HavedRecenter = false;
     void Update()
     {
-        updated = false;  // OK to recompute head pose.
-        if (updateEarly)
+        if (GvrViewer.SvrXRLoader && (m_UpdateType == UpdateType.Update ||
+                m_UpdateType == UpdateType.UpdateAndBeforeRender))
         {
             UpdateHead();
         }
-        TrackPosition = trackPosition;
     }
 
-    // Normally, update head pose now.
+    //// Normally, update head pose now.
     void LateUpdate()
     {
-        UpdateHead();
+        if (!GvrViewer.SvrXRLoader)
+        {
+            UpdateHead();
+        }
     }
-    public void SetAdujst(Matrix4x4 matrix4X4)
+    protected virtual void FixedUpdate()
     {
-        mAdjust = matrix4X4;
+        if (GvrViewer.SvrXRLoader && (m_UpdateType == UpdateType.Update ||
+               m_UpdateType == UpdateType.UpdateAndBeforeRender))
+        {
+            UpdateHead();
+        }
+    }
+    protected virtual void OnEnable()
+    {
+        Application.onBeforeRender += OnBeforeRender;
+    }
+
+    protected virtual void OnDisable()
+    {
+        // remove delegate registration            
+        Application.onBeforeRender -= OnBeforeRender;
+    }
+
+    protected virtual void OnBeforeRender()
+    {
+        if (GvrViewer.SvrXRLoader && (m_UpdateType == UpdateType.BeforeRender ||
+                m_UpdateType == UpdateType.UpdateAndBeforeRender))
+        {
+            UpdateHead();
+        }
+    }
+    public void SetAdujst(Quaternion rotation)
+    {
+        mAdjustOritation = Quaternion.Inverse(rotation);
     }
     // Compute new head pose.
     private void UpdateHead()
     {
-        if (updated)
-        {  // Only one update per frame, please.
+        if (!enabled)
             return;
-        }
-        updated = true;
-
-        
-
-        GvrViewer.Instance.UpdateState();
-        
+#if UNITY_ANDROID && !UNITY_EDITOR
         if (trackRotation)
         {
-            orientation = (mAdjust * Matrix4x4.TRS(Vector3.zero,GvrViewer.Instance.HeadPose.Orientation,Vector3.one)).rotation;
+            if (GvrViewer.SvrXRLoader) {
+#if UNITY_2019_3_OR_NEWER
+                InputTracking.GetNodeStates(nodeStates);
+                foreach (XRNodeState nodeState in nodeStates)
+                {
+                    //Debug.Log("nodeState xxxx "+ nodeState.nodeType);
+                    if (nodeState.nodeType == XRNode.CenterEye)
+                    {
+                        nodeState.TryGetRotation(out orientation);
+                        break;
+                    }
+                }
+#endif
+            }
+            else {
+                GvrViewer.Instance.UpdateState();
+                //orientation = (mAdjust * Matrix4x4.TRS(Vector3.zero, GvrViewer.Instance.HeadPose.Orientation, Vector3.one)).rotation;
+                orientation = (mAdjustOritation * GvrViewer.Instance.HeadPose.Orientation);
+            }
             if (target == null)
             {
-               transform.localRotation = orientation;
+                transform.localRotation = orientation;
             }
             else
             {
                 transform.rotation = target.rotation * orientation;
             }
-        }
 
+        }
+        else
+        {
+            if (!GvrViewer.SvrXRLoader)
+                GvrViewer.Instance.UpdateState();
+        }
+#endif
         if (trackPosition)
         {
             //Vector3 pos = GvrViewer.Instance.HeadPose.Position;
             Vector3 pos = GvrControllerInput.GetPosition(SvrControllerState.NoloHead);
-//#if NOLOSDK
-//            pos = NoloVR_Controller.GetDevice(NoloDeviceType.Hmd).GetPose().pos;
-//#endif
+            //#if NOLOSDK
+            //            pos = NoloVR_Controller.GetDevice(NoloDeviceType.Hmd).GetPose().pos;
+            //#endif
             if (target == null)
             {
                 transform.localPosition = pos;
@@ -168,5 +253,28 @@ public class GvrHead : MonoBehaviour
         {
             OnHeadUpdated(gameObject);
         }
+
+        //if (NeedToRecenter == 0)
+        //{
+        //    if (!HavedRecenter)
+        //    {
+        //        GvrViewer.Instance.Recenter();
+        //        GvrControllerInput.RecenterController();
+        //        HavedRecenter = true;
+        //    }
+        //}
+        //else
+        //{
+        //    NeedToRecenter--;
+        //}
+    }
+
+    void OnApplicationPause(bool pause)
+    {
+        //if (NeedToRecenter == 0)
+        //{
+        //    NeedToRecenter = 1;
+        //    HavedRecenter = false;
+        //}
     }
 }

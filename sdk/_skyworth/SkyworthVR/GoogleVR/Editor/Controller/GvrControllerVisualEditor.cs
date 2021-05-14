@@ -29,6 +29,7 @@ public class GvrControllerVisualEditor : Editor
     private SerializedProperty readControllerState;
     private SerializedProperty displayState;
     private SerializedProperty maximumAlpha;
+    private SerializedProperty controllerType;
     private SerializedProperty controllerrenderer;
     private SerializedProperty triggerButtonColorProperty;
     private SerializedProperty triggerTransformProperty;
@@ -61,6 +62,7 @@ public class GvrControllerVisualEditor : Editor
         controllerrenderer = serializedObject.FindProperty(GvrControllerVisual.CONTROLLERRENDERER);
         triggerButtonColorProperty = serializedObject.FindProperty(GvrControllerVisual.triggerButtonColorProperty);
         triggerTransformProperty = serializedObject.FindProperty(GvrControllerVisual.m_TriggerTargetProperty);
+        controllerType = serializedObject.FindProperty(GvrControllerVisual.CONTROLLERTYPE);
     }
 
     public override void OnInspectorGUI()
@@ -137,6 +139,7 @@ public class GvrControllerVisualEditor : Editor
         }
 
         EditorGUILayout.PropertyField(maximumAlpha);
+        EditorGUILayout.PropertyField(controllerType);
 
         serializedObject.ApplyModifiedProperties();
     }
@@ -151,9 +154,8 @@ public class GvrControllerVisualEditor : Editor
         if (displayStateHeaderStyle == null)
         {
             displayStateHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
-
             displayStateHeaderStyle.fontSize =
-              displayStateHeaderStyle.font.fontSize + DISPLAY_STATE_HEADER_FONT_SIZE_OFFSET;
+              displayStateHeaderStyle.fontSize + DISPLAY_STATE_HEADER_FONT_SIZE_OFFSET;
 
             displayStateHeaderHeight = displayStateHeaderStyle.CalcSize(displayStateHeaderContent).y;
         }

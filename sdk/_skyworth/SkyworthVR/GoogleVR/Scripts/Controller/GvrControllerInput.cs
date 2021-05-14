@@ -18,6 +18,10 @@ using System.Collections;
 
 using Gvr.Internal;
 using System.Threading;
+using System.Collections.Generic;
+#if UNITY_2019_3_OR_NEWER
+using UnityEngine.XR;
+#endif
 
 /// Represents the controller's current connection state.
 /// All values and semantics below (except for Error) are
@@ -171,9 +175,13 @@ public class GvrControllerInput : MonoBehaviour
                         return controllerStateRight;
                 }
             }
-            else
+            else if ((svrControllerState & SvrControllerState.GvrController )!= 0)
             {
                 return controllerStateRight;
+            }
+            else
+            {
+                return controllerStateHead;
             }
         }
     }
@@ -334,14 +342,11 @@ public class GvrControllerInput : MonoBehaviour
         switch (svrControllerState)
         {
             case SvrControllerState.NoloLeftContoller:
-                return instance.controllerStateLeft.accel;
+                return instance.controllerStateLeft.position;
             case SvrControllerState.NoloRightContoller:
-                return instance.controllerStateRight.accel;
+                return instance.controllerStateRight.position;
             case SvrControllerState.NoloHead:
-                if (instance.controllerStateHead.connectionState == GvrConnectionState.Connected)
-                    return instance.controllerStateHead.accel;
-                else
-                    return Vector3.zero;
+                return instance.controllerStateHead.position;
             default:
                 return Vector3.zero;
         }
@@ -608,7 +613,7 @@ public class GvrControllerInput : MonoBehaviour
             //            }
             //#endif
             if (SvrState == SvrControllerState.None)
-                return GetTouch();
+                return SVR.AtwAPI.ClickButton() || GetTouch();
             return instance.controllerState.clickButtonState;
         }
     }
@@ -641,7 +646,7 @@ public class GvrControllerInput : MonoBehaviour
             //            }
             //#endif
             if (SvrState == SvrControllerState.None)
-                return GetTouchDown();
+                return SVR.AtwAPI.ClickButtonDown() || GetTouchDown();
             return instance.controllerState.clickButtonDown;
         }
     }
@@ -674,7 +679,7 @@ public class GvrControllerInput : MonoBehaviour
             //            }
             //#endif
             if (SvrState == SvrControllerState.None)
-                return GetTouchUp();
+                return SVR.AtwAPI.ClickButtonUp() || GetTouchUp();
             return instance.controllerState.clickButtonUp;
         }
     }
@@ -702,6 +707,8 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
+            if (SvrState == SvrControllerState.None)
+                return false;
             return instance.controllerState.triggerButtonState;
         }
     }
@@ -733,6 +740,8 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
+            if (SvrState == SvrControllerState.None)
+                return false;
             return instance.controllerState.triggerButtonDown;
         }
     }
@@ -764,6 +773,8 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
+            if (SvrState == SvrControllerState.None)
+                return false;
             return instance.controllerState.triggerButtonUp;
         }
     }
@@ -792,6 +803,8 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
+            if (SvrState == SvrControllerState.None)
+                return false;
             return instance.controllerState.appButtonState;
         }
     }
@@ -1000,6 +1013,8 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
+            if (SvrState == SvrControllerState.None)
+                return false;
             return instance.controllerState.appButtonDown;
         }
     }
@@ -1031,6 +1046,8 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
+            if (SvrState == SvrControllerState.None)
+                return false;
             return instance.controllerState.appButtonUp;
         }
     }
@@ -1059,7 +1076,6 @@ public class GvrControllerInput : MonoBehaviour
             //                }
             //            }
             //#endif
-
             return instance.controllerState.homeButtonDown;
         }
     }
@@ -1247,9 +1263,9 @@ public class GvrControllerInput : MonoBehaviour
         {
 
             case SvrControllerState.NoloLeftContoller:
-                return instance.controllerStateLeft.gyro.z;
+                return instance.controllerStateLeft.triggervalue;
             case SvrControllerState.NoloRightContoller:
-                return instance.controllerStateRight.gyro.z;
+                return instance.controllerStateRight.triggervalue;
 
             default:
                 return 0;
@@ -1267,12 +1283,13 @@ public class GvrControllerInput : MonoBehaviour
         }
         instance = this;
 
-        Svr.Controller.SvrController.InitController();
+        //Svr.Controller.SvrControllerV2.InitController();
 
         if (controllerProvider == null)
         {
             controllerProvider = ControllerProviderFactory.CreateControllerProvider(this);
         }
+        controllerProvider.OnResume();
         // Keep screen on here, since GvrController must be in any GVR scene in order to enable
         // controller capabilities.
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -1287,9 +1304,10 @@ public class GvrControllerInput : MonoBehaviour
     //private ControllerState m_PreviousState = new ControllerState();
     void Update()
     {
-
+        
         if (lastUpdatedFrameCount != Time.frameCount && Thread.CurrentThread == CurrentGameThread)
         {
+            
             //SVR.AtwAPI.BeginTrace("input-update");
 
 
@@ -1297,15 +1315,44 @@ public class GvrControllerInput : MonoBehaviour
             // controller API to ensure the state is consistent throughout a frame.
             lastUpdatedFrameCount = Time.frameCount;
 
-            Svr.Controller.SvrController.CallBegin();
+            //Svr.Controller.ControllerState[] controllerState = Svr.Controller.SvrController.CallBegin();
+
+            //controllerStateRight.ClearTransientState();
+            //controllerStateLeft.ClearTransientState();
+            //controllerStateHead.ClearTransientState();
+            //foreach (var item in controllerState)
+            //{
+            //    if (controllerProvider != null && item != null && item.connectionState == Svr.Controller.ConnectStatus.Connected)
+            //    {
+            //        switch (item.handness)
+            //        {
+            //            case Svr.Controller.Handness.Right:
+            //                controllerStateRight.mControllerState = item;
+            //                controllerProvider.ReadState(controllerStateRight);
+            //                break;
+            //            case Svr.Controller.Handness.Left:
+            //                controllerStateLeft.mControllerState = item;
+            //                controllerProvider.ReadState(controllerStateLeft);
+            //                break;
+            //            case Svr.Controller.Handness.Head:
+            //                controllerStateHead.mControllerState = item;
+            //                controllerProvider.ReadState(controllerStateHead);
+            //                break;
+            //            default:
+            //                break;
+            //        }
+            //    }
+            //}
+            SVR.AtwAPI.UpdateClickState();
+            controllerProvider.ReadState(controllerStateLeft, controllerStateRight, controllerStateHead);
             SvrControllerState oldSvrState = SvrState;
 
-            if (controllerProvider != null)
-            {
-                controllerProvider.ReadState(controllerStateRight);
-                controllerProvider.ReadState(controllerStateLeft);
-                controllerProvider.ReadState(controllerStateHead);
-            }
+            //if (controllerProvider != null)
+            //{
+            //    controllerProvider.ReadState(controllerStateRight);
+            //    controllerProvider.ReadState(controllerStateLeft);
+            //    controllerProvider.ReadState(controllerStateHead);
+            //}
 
             UpdateTouchPosCentered();
             mSvrState = ReadSvrContollerState();
@@ -1336,8 +1383,18 @@ public class GvrControllerInput : MonoBehaviour
             }
             if (SvrState == SvrControllerState.None)
             {
-                controllerState.recentered = SVR.AtwAPI.UnityRecent();
-                controllerState.homeButtonDown = SVR.AtwAPI.HomeClick();
+                controllerStateHead.recentered = SVR.AtwAPI.UnityRecent();
+                controllerStateHead.homeButtonDown = SVR.AtwAPI.HomeClick();
+                if (controllerStateHead.recentered )
+                {
+                    RecentHMD();
+                }
+            }
+            if ((SvrState & SvrControllerState.GvrController) != 0 && controllerStateRight.recentered)
+            {
+                RecentHMD();
+                controllerStateRight.Recent();
+
             }
 
             if ((svrControllerState & (SvrControllerState.NoloLeftContoller | SvrControllerState.NoloRightContoller)) != 0)
@@ -1350,8 +1407,29 @@ public class GvrControllerInput : MonoBehaviour
             //SVR.AtwAPI.EndTrace();
         }
     }
+    public static void RecenterController()
+    {
+        if ((SvrState & SvrControllerState.GvrController) != 0)
+        {
+            instance.controllerStateRight.Recent();
+        }
+    }
+    private void RecentHMD()
+    {
+        if (GvrViewer.SvrXRLoader)
+        {
+#if UNITY_2019_3_OR_NEWER && SVR
+            var inputsystem = new List<XRInputSubsystem>();
+            SubsystemManager.GetInstances(inputsystem);
+            for (int i = 0; i < inputsystem.Count; i++)
+            {
+                bool statue = inputsystem[i].TryRecenter();
+            }
+#endif
+        }
+    }
 
-    #region NOLO RECENTER
+#region NOLO RECENTER
     //recenter about
     private int leftcontrollerRecenter_PreFrame = -1;
     private int rightcontrollerRecenter_PreFrame = -1;
@@ -1379,7 +1457,7 @@ public class GvrControllerInput : MonoBehaviour
             controllerState.recentered = false;
 
     }
-    #endregion !NOLO RECENTER
+#endregion !NOLO RECENTER
     private static SvrControllerState svrControllerState = SvrControllerState.None;
     private SvrControllerState ReadSvrContollerState()
     {

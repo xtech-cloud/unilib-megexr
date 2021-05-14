@@ -111,11 +111,16 @@ class GvrBuildProcessor : IPreprocessBuild, IPostprocessBuild
             if (!Directory.Exists(Application.dataPath + "/Plugins")) Directory.CreateDirectory(Application.dataPath + "/Plugins");
             if (!Directory.Exists(Application.dataPath + "/Plugins/Android")) Directory.CreateDirectory(Application.dataPath + "/Plugins/Android");
             if (!Directory.Exists(Application.dataPath + "/Plugins/Android/assets")) Directory.CreateDirectory(Application.dataPath + "/Plugins/Android/assets");
+            string[] linesText = File.ReadAllLines(configpath);
             if (File.Exists(configpath))
             {
                 File.Delete(configpath);
             }
             StreamWriter sw = File.CreateText(configpath);
+#if UNITY_2019_3_OR_NEWER
+#if SVR_LEGACY
+            sw.WriteLine("UNITY_USE_SPLASH=0");
+#else
             if (PlayerSettings.SplashScreen.show)
             {
                 sw.WriteLine("UNITY_USE_SPLASH=1");
@@ -124,7 +129,13 @@ class GvrBuildProcessor : IPreprocessBuild, IPostprocessBuild
             {
                 sw.WriteLine("UNITY_USE_SPLASH=0");
             }
-            
+#endif
+#else
+            sw.WriteLine("UNITY_USE_SPLASH=0");
+#endif
+
+            if (linesText.Length > 1)
+                sw.WriteLine(linesText[1]);
             sw.Close();
 
         }

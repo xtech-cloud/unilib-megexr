@@ -34,7 +34,11 @@ namespace Gvr.Internal
 #elif UNITY_ANDROID
             // Use the GVR C API.
             //return new AndroidNativeControllerProvider();
-            return new SvrAndroidServiceControllerProvider();
+            //return new SvrAndroidServiceControllerProviderV2();
+            if(SVR.AtwAPI.SvrControllerV2)
+                return new SvrAndroidServiceControllerProviderV2();
+            else
+                return new SvrAndroidServiceControllerProvider();
 
 #else
       // Platform not supported.

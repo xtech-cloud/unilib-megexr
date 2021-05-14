@@ -53,6 +53,7 @@ public class GvrTrackedController : MonoBehaviour
         }
     }
 
+    public Svr.SvrControllerType m_ControllerType = Svr.SvrControllerType.Ximmers;
     /// Is the object's active status determined by the controller connection status.
     public bool IsDeactivatedWhenDisconnected
     {
@@ -88,7 +89,6 @@ public class GvrTrackedController : MonoBehaviour
             receiver.ArmModel = armModel;
         }
     }
-
     void Awake()
     {
         SVR.AtwAPI.BeginTrace("track-awake");
@@ -109,7 +109,7 @@ public class GvrTrackedController : MonoBehaviour
         {
             gameObject.SetActive(obj);
             UpdateChildTransform();
-            GvrPointerInputModule.Pointer = obj ? mBasePointer : null;
+            // GvrPointerInputModule.Pointer = mBasePointer;
         }
 
     }
@@ -139,20 +139,31 @@ public class GvrTrackedController : MonoBehaviour
             //OnControllerStateChanged(GvrControllerInput.State, GvrControllerInput.State);
             if (isDeactivatedWhenDisconnected && enabled)
             {
-                gameObject.SetActive(state == SvrControllerState.GvrController);
-                UpdateChildTransform();
-                if (gameObject.activeSelf)
+                if (m_ControllerType == Svr.SvrSetting.ControllerType)
                 {
-                    GvrPointerInputModule.Pointer = GetComponentInChildren<GvrBasePointer>();
+                    gameObject.SetActive(state == SvrControllerState.GvrController);
+                    UpdateChildTransform();
+                    if (gameObject.activeSelf)
+                    {
+                        GvrPointerInputModule.Pointer = GetComponentInChildren<GvrBasePointer>();
+                    }
+                    else
+                    {
+                        if (GvrPointerInputModule.Pointer == mBasePointer)
+                        {
+                            GvrPointerInputModule.Pointer = null;
+                        }
+                    }
                 }
                 else
                 {
+                    gameObject.SetActive(false);
+                    UpdateChildTransform();
                     if (GvrPointerInputModule.Pointer == mBasePointer)
                     {
                         GvrPointerInputModule.Pointer = null;
                     }
                 }
-
             }
         }
     }

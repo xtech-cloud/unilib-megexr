@@ -17,6 +17,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma multi_compile CONTROLLER_GVR CONTROLLER_NOLO
 
 			#include "UnityCG.cginc"
 
@@ -35,6 +36,7 @@
 			// Larger values tighten the feather
 			#define _TOUCH_FEATHER 8
 
+#ifdef CONTROLLER_NOLO
 			/// The center of the touchpad in UV space
 			/// Only change this value if you also change the UV layout of the mesh
 			#define _GVR_TOUCHPAD_CENTER half2(.839, .393)
@@ -42,6 +44,15 @@
 			/// The radius of the touchpad in UV space, based on the geometry
 			/// Only change this value if you also change the UV layout of the mesh
 			#define _GVR_TOUCHPAD_RADIUS .101
+#else
+			/// The center of the touchpad in UV space
+			/// Only change this value if you also change the UV layout of the mesh
+			#define _GVR_TOUCHPAD_CENTER half2(.839, .393)
+
+			/// The radius of the touchpad in UV space, based on the geometry
+			/// Only change this value if you also change the UV layout of the mesh
+			#define _GVR_TOUCHPAD_RADIUS .101
+#endif
 
 			struct appdata {
 				float4 vertex : POSITION;
@@ -66,6 +77,8 @@
 			half4 _GvrTouchPadColor;
 			half4 _GvrAppButtonColor;
 			half4 _GvrSystemButtonColor;
+			half4 _GvrVolumeUpButtonColor;
+			half4 _GvrVolumeDownButtonColor;
 			half4 _GvrBatteryColor;
 			half4 _GvrTriggerColor;
 			half4 _GvrTouchInfo;//xy position, z touch duration, w battery info
@@ -115,6 +128,13 @@
 					o.color.a += v.color.g * _GvrControllerAlpha.z;
 					vertex4.y -= v.color.g * _BUTTON_PRESS_DEPTH*_GvrControllerAlpha.z;
 				}
+				if (v.color.r == 0 && v.color.g == 1 && v.color.b == 1)
+				{
+					//triggerbutton
+					o.color.rgb += _TriggerAlpha * _GvrTriggerColor;
+					o.color.a += _TriggerAlpha;
+					vertex4.y -= _TriggerAlpha * _BUTTON_PRESS_DEPTH;
+				}
 				if (v.color.r == 0 && v.color.g == 0 && v.color.b == 1)
 				{
 					//systembutton
@@ -122,13 +142,7 @@
 					o.color.a += v.color.b * _GvrControllerAlpha.w;
 					vertex4.y -= v.color.b *  _BUTTON_PRESS_DEPTH*_GvrControllerAlpha.w;
 				}
-				if (v.color.r == 1 && v.color.g == 1 && v.color.b == 0)
-				{
-					//tiggerbutton
-					o.color.rgb += _TriggerAlpha * _GvrTriggerColor;
-					o.color.a +=_TriggerAlpha;
-					vertex4.y -= _TriggerAlpha * _BUTTON_PRESS_DEPTH;
-				}
+				
 
 				o.vertex = UnityObjectToClipPos(vertex4);
 

@@ -15,11 +15,9 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-//#if UNITY_2017_3_OR_NEWER
-//using UnityEngine.XR;
-//#else
-//using UnityEngine.VR;
-//#endif
+#if UNITY_2019_3_OR_NEWER
+using UnityEngine.XR;
+#endif
 
 using Gvr.Internal;
 using System.Collections;
@@ -108,9 +106,9 @@ public class GvrViewer : MonoBehaviour
         get
         {
 #if !UNITY_HAS_GOOGLEVR || UNITY_EDITOR
-            return vrModeEnabled;
+            return vrModeEnabled ;
 #else
-      return vrModeEnabled;//UnityEngine.VR.VRSettings.enabled;
+      return vrModeEnabled && Svr.SvrSetting.IsVRDevice ;//UnityEngine.VR.VRSettings.enabled;
 #endif  // !UNITY_HAS_GOOGLEVR || UNITY_EDITOR
         }
         set
@@ -463,8 +461,35 @@ public class GvrViewer : MonoBehaviour
     // Example: Cardboard I/O 2015 viewer profile
     //public Uri DefaultDeviceProfile = new Uri("http://google.com/cardboard/cfg?p=CgZHb29nbGUSEkNhcmRib2FyZCBJL08gMjAxNR0J-SA9JQHegj0qEAAAcEIAAHBCAABwQgAAcEJYADUpXA89OghX8as-YrENP1AAYAM");
     public Uri DefaultDeviceProfile = null;
+    private static bool XRLoaderStatueInit;
+    private static bool mSvrXRLoader;
     /// @endcond
-
+    public static bool SvrXRLoader
+    {
+        get
+        {
+#if UNITY_2019_3_OR_NEWER
+            if (!XRLoaderStatueInit)
+            {
+                List<UnityEngine.XR.InputDevice> inputDevices = new List<UnityEngine.XR.InputDevice>();
+                UnityEngine.XR.InputDevices.GetDevices(inputDevices);
+                foreach (var item in inputDevices)
+                {
+                    if (item.name.Contains("Skyworth"))
+                    {
+                        Debug.Log("Svr XRLoader true");
+                        mSvrXRLoader = true;
+                        break;
+                    }
+                }
+                XRLoaderStatueInit = true;
+            }
+            return mSvrXRLoader;
+#else
+            return false;
+#endif
+        }
+    }
     private void InitDevice()
     {
         
@@ -473,6 +498,7 @@ public class GvrViewer : MonoBehaviour
             device.Destroy();
         }
         Svr.SvrLog.Log("InitDevice");
+        
         SVR.AtwAPI.BeginTrace("init");
         device = BaseVRDevice.GetDevice();
         SVR.AtwAPI.EndTrace();
@@ -521,6 +547,7 @@ public class GvrViewer : MonoBehaviour
     void Awake()
     {
         SVR.AtwAPI.BeginTrace("gvrviewer-awake");
+
         if (instance == null)
         {
             instance = this;
@@ -536,7 +563,13 @@ public class GvrViewer : MonoBehaviour
 #endif
         // Prevent the screen from dimming / sleeping
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
-
+        if (!VRModeEnabled)
+        {
+            enabled = false;
+            return;
+        }
+        SVR.AtwAPI.UnityOnPaused(false);
+        if (SvrXRLoader) return;
         GvrViewerInternal.Instance.StereoScreenScale = StereoScreenScale;
 
         // Set up stereo pre- and post-render stages only for:
@@ -569,6 +602,7 @@ public class GvrViewer : MonoBehaviour
 
     void Start()
     {
+        if (SvrXRLoader) return;
         // Set up stereo controller only for:
         // - Unity without the GVR native integration
         // - In-editor emulator when the current platform is Android or iOS.
@@ -629,10 +663,10 @@ public class GvrViewer : MonoBehaviour
         {
             canRecent = value;
             if (canRecent)
-                Controller.Head.SetAdujst(Matrix4x4.identity);
+                Controller.Head.SetAdujst(Quaternion.identity);
         }
     }
-
+    private Quaternion m_RecenterQuaternion;
     // Only call device.UpdateState() once per frame.
     private int updatedToFrame = 0;
 
@@ -690,29 +724,62 @@ public class GvrViewer : MonoBehaviour
     /// and it only has an effect if the device supports it.
     public void PostRender(StereoScreen stereoScreen)
     {
-
+        if (SvrXRLoader) return;
         device.PostRender(stereoScreen);
     }
     public void OnPreRender()
     {
+        if (SvrXRLoader) return;
         device.PreRender(stereoScreen);
     }
 
     /// Resets the tracker so that the user's current direction becomes forward.
     public void Recenter()
     {
-        device.Recenter();
+        if (SvrXRLoader)
+        {
+#if UNITY_2019_3_OR_NEWER && SVR
+            var inputsystem = new List<XRInputSubsystem>();
+            SubsystemManager.GetInstances(inputsystem);
+            for (int i = 0; i < inputsystem.Count; i++)
+            {
+                bool statue = inputsystem[i].TryRecenter();
+            }
+#endif
+            return;
+        }
+        //device.Recenter();
+        if (Vector3.Dot(Vector3.up, Quaternion.Euler(GvrViewer.Instance.HeadPose.Orientation.eulerAngles.x, 0, 0) * Vector3.forward) > 0
+            && Vector3.Angle(Quaternion.Euler(GvrViewer.Instance.HeadPose.Orientation.eulerAngles.x, 0, 0) * Vector3.forward,Vector3.forward) > 30)
+        {
+            RecenterXYZ();
+        }
+        else
+        {
+            RecenterByYaw();
+        }
     }
-    public void RecenterByYaw(float yaw)
+   
+    public void RecenterPreviouse()
     {
-        //device.RecenterByYaw(yaw);
-        mYaw = yaw;
-
+        if (SvrXRLoader) return;
+        Controller.Head.SetAdujst(m_RecenterQuaternion);
+    }
+    public void RecenterXYZ()
+    {
+        m_RecenterQuaternion = GvrViewer.Instance.HeadPose.Orientation;
+        Controller.Head.SetAdujst(m_RecenterQuaternion);
+    }
+    public void RecenterByYaw()
+    {
+        m_RecenterQuaternion = Quaternion.Euler(0, GvrViewer.Instance.HeadPose.Orientation.eulerAngles.y, 0);
+        Controller.Head.SetAdujst(m_RecenterQuaternion);
     }
     private float mTouchTime = 0;
     private void Update()
     {
-        if (GvrControllerInput.Recentered && canRecent)
+        if (SvrXRLoader) return;
+        if (GvrControllerInput.Recentered)
         {
             //mYaw = 0;
             Recenter();
@@ -721,7 +788,7 @@ public class GvrViewer : MonoBehaviour
         //if (Svr.SvrSetting.GetNoloConnected)
         //    NoloRecenter();
     }
-    #region NOLO RECENTER
+#region NOLO RECENTER
     //recenter about
     private int leftcontrollerRecenter_PreFrame = -1;
     private int rightcontrollerRecenter_PreFrame = -1;
@@ -746,7 +813,7 @@ public class GvrViewer : MonoBehaviour
         }
        
     }
-    #endregion !NOLO RECENTER
+#endregion !NOLO RECENTER
     /// Launch the device pairing and setup dialog.
     public void ShowSettingsDialog()
     {
@@ -776,6 +843,7 @@ public class GvrViewer : MonoBehaviour
 
     void OnEnable()
     {
+        if (SvrXRLoader) return;
 #if UNITY_EDITOR
         // This can happen if you edit code while the editor is in Play mode.
         if (device == null)
@@ -783,9 +851,9 @@ public class GvrViewer : MonoBehaviour
             InitDevice();
         }
 #endif
+        Recenter();
         Svr.SvrLog.Log("GvrViewer OnEnable");
     }
-
     void OnDisable()
     {
         //device.OnPause(true);
@@ -795,8 +863,34 @@ public class GvrViewer : MonoBehaviour
     void OnApplicationPause(bool pause)
     {
         Svr.SvrLog.LogFormat("GvrViewer OnApplicationPause,{0}", pause);
-        device.OnPause(pause);
+        if (SvrXRLoader)
+        {
+            SVR.AtwAPI.UnityOnPaused(pause);
+            return;
+        }
+        
+        
+        if (pause)
+            device.OnPause(true);
+        else
+            StartCoroutine(Resume());
     }
+
+    IEnumerator Resume()
+    {
+        yield return null;
+        yield return null;
+        yield return null;
+        yield return null;
+        yield return null;
+        yield return null;
+        device.OnPause(false);
+        yield return null;
+        yield return null;
+        yield return null;
+        Recenter();
+    }
+   
     private float TestYaw = 0;
     IEnumerator ResetTest()
     {
@@ -829,17 +923,23 @@ public class GvrViewer : MonoBehaviour
     //}
     void OnApplicationFocus(bool focus)
     {
+        if (SvrXRLoader) return;
+
         device.OnFocus(focus);
     }
 
     void OnApplicationQuit()
     {
+        if (SvrXRLoader) return;
+
         //SensorDemo.SaveHMDrotation(HeadPose.Orientation.eulerAngles.y);
         device.OnApplicationQuit();
     }
     
     void OnDestroy()
     {
+        if (SvrXRLoader) return;
+
 #if !UNITY_HAS_GOOGLEVR || UNITY_EDITOR
         VRModeEnabled = false;
 #endif  // !UNITY_HAS_GOOGLEVR || UNITY_EDITOR

@@ -27,6 +27,7 @@ public static class GvrIntent
     private const string METHOD_GET_TYPE = "getType";
     private const string METHOD_HASH_CODE = "hashCode";
     private const string METHOD_INTENT_GET_DATA_STRING = "getDataString";
+    private const string METHOD_INTENT_GET_DATA = "getData";
     private const string METHOD_INTENT_GET_BOOLEAN_EXTRA = "getBooleanExtra";
 
     private const string EXTRA_VR_LAUNCH = "android.intent.extra.VR_LAUNCH";
@@ -77,7 +78,21 @@ public static class GvrIntent
     return androidIntent.Call<string>(METHOD_INTENT_GET_DATA_STRING);
 #endif  // UNITY_EDITOR || !UNITY_ANDROID
     }
-
+    // Returns the string representation of the data URI on which this activity's intent is
+    // operating. See Intent.getData() in the Android documentation.
+    public static AndroidJavaObject GetDataFromIntent()
+    {
+#if UNITY_EDITOR || !UNITY_ANDROID
+        return null;
+#else
+    AndroidJavaObject androidIntent = GetIntent();
+    if (androidIntent == null) {
+      Debug.Log("Intent on current activity was null");
+      return null;
+    }
+    return androidIntent.Call<AndroidJavaObject>(METHOD_INTENT_GET_DATA);
+#endif
+    }
     public static string GetStringExtra(string str)
     {
 #if UNITY_EDITOR || !UNITY_ANDROID
@@ -116,6 +131,20 @@ public static class GvrIntent
       return false;
     }
     return androidIntent.Call<bool>("getBooleanExtra", str,_default);
+#endif  // UNITY_EDITOR || !UNITY_ANDROID
+    }
+    public static bool HasExtra(string name)
+    {
+#if UNITY_EDITOR || !UNITY_ANDROID
+        return false;
+#else
+        AndroidJavaObject androidIntent = GetIntent();
+        if (androidIntent == null)
+        {
+            Debug.Log("Intent on current activity was null");
+            return false;
+        }
+        return androidIntent.Call<bool>("hasExtra", name);
 #endif  // UNITY_EDITOR || !UNITY_ANDROID
     }
 

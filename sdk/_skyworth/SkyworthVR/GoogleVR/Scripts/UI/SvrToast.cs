@@ -52,6 +52,10 @@ public class SvrToast : MonoBehaviour
                 {
                     systemLanguage = SystemLanguage.German;
                 }
+				else if (language == "fr" && country == "FR")
+                {
+                    systemLanguage = SystemLanguage.French;
+                }
                 else
                 {
                     systemLanguage = SystemLanguage.English;
@@ -93,6 +97,9 @@ public class SvrToast : MonoBehaviour
                 break;
             case SystemLanguage.ChineseTraditional:
                 msg_key_down = "當前處於手柄模式";
+                break;
+			case SystemLanguage.French:
+                msg_key_down = "Actuellement en mode poignée";
                 break;
             default:
                 break;

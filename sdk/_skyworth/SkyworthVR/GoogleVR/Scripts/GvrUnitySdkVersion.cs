@@ -30,10 +30,10 @@ public class GvrUnitySdkVersion
     {
         Debug.Log(VERSION_HEADER + Svr.SvrVersion.GVR_SDK_VERSION);
 #if SVR
-        Debug.Log("Using S8000 V901 Setting");
+        Debug.Log("Using (S1,V901,S802) Setting");
         Svr.SvrSetting.SetVRSupport(true);
 #elif SVR_LEGACY
-        Debug.Log("Using S8000 V901 Legacy Setting");
+        Debug.Log("Using (S1,V901,S802) Legacy Setting");
         Svr.SvrSetting.SetVRSupport(false);
 #elif SVR_VR9
         Debug.Log("Using S801 Setting");

@@ -37,6 +37,10 @@ public class SvrVolumeToast : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Svr.SvrSetting.IsVR9Device && (SVR.AtwAPI.VolumeDownKeyDown || SVR.AtwAPI.VolumeUpKeyDown))
+        {
+            UpdateVolume(SVR.AtwAPI.GetCurrentVolume());
+        }
         try
         {
             while (ExecuteQueue.Count > 0)

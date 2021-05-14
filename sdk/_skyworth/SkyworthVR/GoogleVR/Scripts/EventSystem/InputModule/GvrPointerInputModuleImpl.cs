@@ -267,6 +267,7 @@ public class GvrPointerInputModuleImpl
 
         // Update the current selection, or clear if it is no longer the current object.
         var selected = EventExecutor.GetEventHandler<ISelectHandler>(currentObject);
+        //var selected = EventExecutor.GetEventHandler<ISelectHandler>(EventSystem.current.currentSelectedGameObject);
         if (selected == ModuleController.eventSystem.currentSelectedGameObject)
         {
             EventExecutor.Execute(ModuleController.eventSystem.currentSelectedGameObject, ModuleController.GetBaseEventData(),
@@ -371,7 +372,15 @@ public class GvrPointerInputModuleImpl
             EventExecutor.Execute(CurrentEventData.pointerDrag, CurrentEventData, ExecuteEvents.dragHandler);
         }
     }
-
+#if ENABLE_LOG
+    private string GetUIObjectFullPath(GameObject _gameObject)
+    {
+        if (_gameObject.transform.parent != null)
+            return GetUIObjectFullPath(_gameObject.transform.parent.gameObject) +":"+ _gameObject.ToString();
+        else
+            return _gameObject.ToString();
+    }
+#endif
     private void HandlePendingClick()
     {
         if (CurrentEventData == null || (!CurrentEventData.eligibleForClick && !CurrentEventData.dragging))
@@ -390,8 +399,12 @@ public class GvrPointerInputModuleImpl
         EventExecutor.Execute(CurrentEventData.pointerPress, CurrentEventData, ExecuteEvents.pointerUpHandler);
 
         GameObject pointerClickHandler = EventExecutor.GetEventHandler<IPointerClickHandler>(go);
-        if (CurrentEventData.pointerPress == pointerClickHandler && CurrentEventData.eligibleForClick && (Time.unscaledTime - CurrentEventData.clickTime)< 1.0f)
+        if (CurrentEventData.pointerPress == pointerClickHandler && CurrentEventData.eligibleForClick && (Time.unscaledTime - CurrentEventData.clickTime) < 1.0f)
         {
+#if ENABLE_LOG
+            if (CurrentEventData.pointerPress != null)
+                Debug.LogFormat("ClickPath:{0}", GetUIObjectFullPath(CurrentEventData.pointerPress));
+#endif
             EventExecutor.Execute(CurrentEventData.pointerPress, CurrentEventData, ExecuteEvents.pointerClickHandler);
         }
 
@@ -534,6 +547,13 @@ public class GvrPointerInputModuleImpl
         if (currentGameObject)
         {
             Pointer.OnPointerExit(currentGameObject);
+            if (CurrentEventData != null)
+            {
+                HandlePendingClick();
+                HandlePointerExitAndEnter(CurrentEventData, null);
+                CurrentEventData = null;
+            }
+            ModuleController.eventSystem.SetSelectedGameObject(null, ModuleController.GetBaseEventData());
             SVR.AtwAPI.OnHover(false);
         }
     }

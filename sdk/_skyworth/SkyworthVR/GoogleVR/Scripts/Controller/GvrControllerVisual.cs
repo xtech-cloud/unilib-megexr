@@ -35,6 +35,7 @@ public class GvrControllerVisual : MonoBehaviour, IGvrArmModelReceiver
         public bool homeButton;
         public bool tiggerButton;
         public bool touching;
+        
         public Vector2 touchPos;
     }
 
@@ -198,7 +199,8 @@ public class GvrControllerVisual : MonoBehaviour, IGvrArmModelReceiver
     // How much time to use as an 'immediate update'.
     // Any value large enough to instantly update all visual animations.
     private const float IMMEDIATE_UPDATE_TIME = 10f;
-
+    public const string CONTROLLERTYPE = "m_ControllerType";
+    public Svr.SvrControllerType m_ControllerType = Svr.SvrControllerType.Ximmers;
     void Awake()
     {
         Initialize();
@@ -348,7 +350,14 @@ public class GvrControllerVisual : MonoBehaviour, IGvrArmModelReceiver
         if (displayState.tiggerButton)
         {
             triggerDtate = Mathf.Min(1, triggerDtate + deltaTime / TOUCHPAD_CLICK_DURATION_SECONDS);
-            m_TriggerTarget.localRotation = Quaternion.Euler(10,0,0);
+            if (m_ControllerType == Svr.SvrControllerType.Ximmers)
+            {
+                m_TriggerTarget.localRotation = Quaternion.Euler(10, 0, 0);//Gvr
+            }
+            else
+            {
+                m_TriggerTarget.localRotation = Quaternion.Euler(0, 0, -10);//nolovr
+            }
         }
         else
         {
