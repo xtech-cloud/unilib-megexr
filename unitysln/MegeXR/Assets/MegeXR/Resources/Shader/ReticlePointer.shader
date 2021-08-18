@@ -10,7 +10,7 @@ Shader "XTC/MegeXR/Reticle/Pointer" {
   }
 
   SubShader {
-    Tags { "Queue"="Overlay" "IgnoreProjector"="True" "RenderType"="Transparent" }
+	Tags{ "Queue" = "Transparent+10" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
     Pass {
       Blend SrcAlpha OneMinusSrcAlpha
       AlphaTest Off
